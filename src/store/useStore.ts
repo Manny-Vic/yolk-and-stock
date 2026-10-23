@@ -84,10 +84,12 @@ export const emptyCart = (): Cart => ({
 });
 
 export interface NewPayment {
-  method: Exclude<PaymentMethod, "credit">;
+  method: PaymentMethod;
   amount: number;
   reference?: string;
   verified?: boolean;
+  /** Credit sales only; falls back to the customer's terms */
+  dueDate?: string;
 }
 
 export interface StoreState {
@@ -314,10 +316,8 @@ export const useStore = create<StoreState>()(
         const t = calcOrder({ ...cart, payments });
         if (totalPayments > t.total) throw new Error("Total payments cannot exceed the order amount.");
         if (payments.some((p) => p.amount <= 0)) throw new Error("Payment amounts must be greater than zero.");
-        const credit = payments.find((p) => p.method === "credit") as undefined | (typeof payments)[number] & { method: "credit" };
-        if (credit) {
-          // credit comes through as a payment entry flagged by the checkout UI
-        }
+        const credit = payments.find((p) => p.method === "credit");
+        if (credit && !cart.customerId) throw new Error("Credit sales require a customer account.");
 
         const seq = st.nextSeqOrder;
         const id = `ORD-${seq}`;
@@ -346,6 +346,7 @@ export const useStore = create<StoreState>()(
             reference: p.reference || undefined,
             verified: p.verified ?? p.method === "cash",
             paidAt: today,
+            dueDate: p.method === "credit" ? p.dueDate ?? addDaysISO(today, customer?.dueDays ?? 14) : undefined,
           })),
           status: "confirmed",
           reservedCases: reserve ? t.cases : 0,
