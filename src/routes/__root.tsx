@@ -6,12 +6,17 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  SidebarTrigger,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
+import { hydrateStore, useStore } from "@/store/useStore";
 
 function NotFoundComponent() {
   return (
@@ -27,7 +32,7 @@ function NotFoundComponent() {
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Go to POS
           </Link>
         </div>
       </div>
@@ -49,7 +54,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Something went wrong on our end. You can try refreshing or head back to the POS.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -65,7 +70,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Go to POS
           </a>
         </div>
       </div>
@@ -78,16 +83,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Golden Nest Egg Depot — Wholesale POS" },
+      {
+        name: "description",
+        content:
+          "Wholesale egg store point of sale and business management: fast bulk order taking, inventory, customer credit, suppliers, expenses, cash flow, and reports.",
+      },
+      { property: "og:title", content: "Golden Nest Egg Depot — Wholesale POS" },
+      {
+        property: "og:description",
+        content: "Click-first wholesale egg POS: build combined orders, edit prices inline, and check out in seconds.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:card", content: "summary" },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -115,13 +131,37 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function StoreTitle() {
+  const storeName = useStore((s) => s.settings.storeName);
+  return (
+    <span className="truncate text-sm font-bold tracking-tight text-foreground">{storeName}</span>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    hydrateStore();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <SidebarProvider
+        style={{ "--sidebar-width": "15rem", "--sidebar-width-icon": "3rem" } as React.CSSProperties}
+      >
+        <AppSidebar />
+        <SidebarInset className="flex h-svh flex-col overflow-hidden">
+          <header className="flex h-11 shrink-0 items-center gap-3 border-b bg-background px-3">
+            <SidebarTrigger />
+            <StoreTitle />
+          </header>
+          <div className="min-h-0 flex-1">
+            <Outlet />
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+      <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
 }

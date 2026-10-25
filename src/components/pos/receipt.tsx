@@ -15,9 +15,9 @@ import { FULFILLMENT_LABELS, calcOrder, perCaseDiscountCents } from "@/lib/calc"
 import { fmtDate, fmtPeso } from "@/lib/money";
 import { printHtml } from "@/lib/print";
 import type { Order, Settings } from "@/lib/types";
-import { METHOD_LABEL } from "@/store/useStore";
+import { METHOD_LABEL, useStore } from "@/store/useStore";
 
-function receiptHtml(order: Order, settings: Settings): string {
+export function receiptHtml(order: Order, settings: Settings): string {
   const t = calcOrder(order);
   const lineRows = order.lines
     .map((l) => {
@@ -50,7 +50,7 @@ function receiptHtml(order: Order, settings: Settings): string {
 }
 
 export function ReceiptDialog({ order, open, onOpenChange }: { order: Order | null; open: boolean; onOpenChange: (v: boolean) => void }) {
-  const settings = useSettingsSafe();
+  const settings = useStore((s) => s.settings);
   if (!order) return null;
   const t = calcOrder(order);
   return (
@@ -158,14 +158,6 @@ export function ReceiptDialog({ order, open, onOpenChange }: { order: Order | nu
   );
 }
 
-function useSettingsSafe(): Settings {
-  return useStoreSelector();
-}
-
-import { useStore } from "@/store/useStore";
-function useStoreSelector(): Settings {
-  return useStore((s) => s.settings);
-}
 
 function SumRow({ label, value }: { label: string; value: string }) {
   return (
