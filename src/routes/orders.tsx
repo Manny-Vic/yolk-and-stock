@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { calcOrder, paymentStatus, type PAYMENT_LABELS } from "@/lib/calc";
+import { calcOrder, paymentStatus } from "@/lib/calc";
 import { fmtDate, fmtPeso } from "@/lib/money";
 import { ORDER_SOURCES, type FulfillmentStatus } from "@/lib/types";
 import { useStore } from "@/store/useStore";
