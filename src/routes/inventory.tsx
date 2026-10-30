@@ -309,7 +309,7 @@ function InventoryPage() {
   );
 }
 
-function StatCard({ label, value, tone }: { label: string; value: string; tone?: "warning" }) {
+function StatCard({ label, value, tone }: { label: string; value: string; tone?: "warning" | "default" | undefined }) {
   return (
     <div className="rounded-xl border bg-card p-3 shadow-card">
       <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>

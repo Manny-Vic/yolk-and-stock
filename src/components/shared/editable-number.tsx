@@ -15,7 +15,7 @@ interface EditableNumberProps {
   onCommit: (value: number) => string | null | void;
   className?: string;
   inputClassName?: string;
-  suffix?: string;
+  suffix?: string | undefined;
   ariaLabel: string;
 }
 

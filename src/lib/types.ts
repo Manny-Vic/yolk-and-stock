@@ -41,11 +41,11 @@ export interface Payment {
   id: string;
   method: PaymentMethod;
   amount: number;
-  reference?: string;
+  reference?: string | undefined;
   verified: boolean;
   paidAt: string;
   /** Only for credit sales */
-  dueDate?: string;
+  dueDate?: string | undefined;
 }
 
 export interface Order {
@@ -55,11 +55,11 @@ export interface Order {
   customerId: string | null;
   customerName: string;
   source: string;
-  sourceDetail?: string;
-  notes?: string;
-  staffNotes?: string;
+  sourceDetail?: string | undefined;
+  notes?: string | undefined;
+  staffNotes?: string | undefined;
   fulfillment: "delivery" | "pickup";
-  requestedDate?: string;
+  requestedDate?: string | undefined;
   deliveryFee: number;
   orderDiscount: number;
   orderDiscountType: DiscountType;
@@ -100,9 +100,9 @@ export interface Customer {
 export interface Supplier {
   id: string;
   name: string;
-  contact?: string;
-  phone?: string;
-  notes?: string;
+  contact?: string | undefined;
+  phone?: string | undefined;
+  notes?: string | undefined;
 }
 
 export interface PurchaseItem {
@@ -117,7 +117,7 @@ export interface PurchaseOrder {
   id: string;
   supplierId: string;
   date: string;
-  expectedDate?: string;
+  expectedDate?: string | undefined;
   items: PurchaseItem[];
   deliveryCost: number;
   status: "ordered" | "received" | "paid";
@@ -132,8 +132,8 @@ export interface Expense {
   amount: number;
   method: Exclude<PaymentMethod, "credit">;
   payee: string;
-  description?: string;
-  receiptName?: string;
+  description?: string | undefined;
+  receiptName?: string | undefined;
 }
 
 export const EXPENSE_CATEGORIES = [
@@ -176,12 +176,12 @@ export interface CashEntry {
   /** Money moves out of accountId… */
   accountId: string;
   /** …and into toAccountId when this is a transfer */
-  toAccountId?: string;
+  toAccountId?: string | undefined;
   direction: "in" | "out";
   amount: number;
   kind: CashEntryKind;
   description: string;
-  ref?: string;
+  ref?: string | undefined;
 }
 
 export interface AuditEntry {
