@@ -71,15 +71,18 @@ const L = (productId: string, productName: string, qty: number, unitPrice: numbe
   unitCost,
 });
 
-const P = (method: Payment["method"], amount: number, opts: Partial<Payment> = {}): Payment => ({
-  id: `sp${++n}`,
-  method,
-  amount,
-  verified: opts.verified ?? true,
-  paidAt: opts.paidAt ?? "2026-10-22",
-  reference: opts.reference,
-  dueDate: opts.dueDate,
-});
+const P = (method: Payment["method"], amount: number, opts: Partial<Payment> = {}): Payment => {
+  const p: Payment = {
+    id: `sp${++n}`,
+    method,
+    amount,
+    verified: opts.verified ?? true,
+    paidAt: opts.paidAt ?? "2026-10-22",
+  };
+  if (opts.reference) p.reference = opts.reference;
+  if (opts.dueDate) p.dueDate = opts.dueDate;
+  return p;
+};
 
 export const SEED_ORDERS: Order[] = [
   {
@@ -188,7 +191,14 @@ export const SEED_PURCHASES: PurchaseOrder[] = [
 
 let c = 0;
 const E = (date: string, accountId: string, direction: "in" | "out", amount: number, kind: CashEntry["kind"], description: string, toAccountId?: string): CashEntry => ({
-  id: `ce${++c}`, date, accountId, toAccountId, direction, amount, kind, description,
+  id: `ce${++c}`,
+  date,
+  accountId,
+  ...(toAccountId ? { toAccountId } : {}),
+  direction,
+  amount,
+  kind,
+  description,
 });
 
 export const SEED_CASH_ENTRIES: CashEntry[] = [

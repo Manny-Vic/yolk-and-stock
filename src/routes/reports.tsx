@@ -283,7 +283,7 @@ function ReportsPage() {
           </ReportBlock>
           <ReportBlock title="Cash reconciliation">
             {accounts.map((a) => (
-              <Row key={a.id} label={a.name} value={fmtPeso(balances[a.id].closing)} />
+              <Row key={a.id} label={a.name} value={fmtPeso(balances[a.id]?.closing ?? 0)} />
             ))}
             <div className="mt-2 space-y-1 border-t pt-2 text-[12px] text-muted-foreground">
               <Row label="Breakage / spoilage records" value={String(breakageCount)} />
@@ -296,7 +296,7 @@ function ReportsPage() {
   );
 }
 
-function Card({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "warning" }) {
+function Card({ label, value, sub, tone }: { label: string; value: string; sub?: string | undefined; tone?: "warning" | undefined }) {
   return (
     <div className="rounded-xl border bg-card p-3 shadow-card">
       <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>

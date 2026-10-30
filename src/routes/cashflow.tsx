@@ -125,7 +125,7 @@ function CashFlowPage() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {accounts.map((a) => {
-          const b = balances[a.id];
+          const b = balances[a.id] ?? { opening: 0, in: 0, out: 0, closing: 0 };
           const icon = a.kind === "cash" ? Banknote : a.kind === "ewallet" ? Smartphone : Landmark;
           const Icon = icon;
           return (
