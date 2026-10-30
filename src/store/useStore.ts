@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import { calcOrder, perCaseDiscountCents, validateDiscount } from "@/lib/calc";
 import { addDaysISO, fmtPeso, todayISO } from "@/lib/money";
 import type {
+  Account,
   AuditEntry,
   CashEntry,
   Customer,
@@ -86,10 +87,10 @@ export const emptyCart = (): Cart => ({
 export interface NewPayment {
   method: PaymentMethod;
   amount: number;
-  reference?: string;
-  verified?: boolean;
+  reference?: string | undefined;
+  verified?: boolean | undefined;
   /** Credit sales only; falls back to the customer's terms */
-  dueDate?: string;
+  dueDate?: string | undefined;
 }
 
 export interface StoreState {
@@ -98,7 +99,7 @@ export interface StoreState {
   suppliers: Supplier[];
   orders: Order[];
   expenses: Expense[];
-  accounts: { id: string; name: string; kind: string; opening: number }[];
+  accounts: Account[];
   cashEntries: CashEntry[];
   purchases: PurchaseOrder[];
   auditLog: AuditEntry[];
@@ -123,7 +124,12 @@ export interface StoreState {
   setOrderStatus: (orderId: string, status: FulfillmentStatus) => void;
   recordPayment: (
     orderId: string,
-    input: { method: Exclude<PaymentMethod, "credit">; amount: number; reference?: string; verified?: boolean },
+    input: {
+      method: Exclude<PaymentMethod, "credit">;
+      amount: number;
+      reference?: string | undefined;
+      verified?: boolean | undefined;
+    },
   ) => void;
   deleteDraftOrder: (orderId: string) => void;
 
