@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, PackageOpen, Pencil } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, PackageOpen, Pencil, Plus } from "lucide-react";
+import { AddProductDialog } from "@/components/inventory/add-product-dialog";
 import { toast } from "sonner";
 
 import { ToneBadge } from "@/components/shared/status-badge";
@@ -61,6 +62,7 @@ function InventoryPage() {
   const updateProduct = useStore((s) => s.updateProduct);
   const reserve = useStore((s) => s.settings.reserveOnConfirm);
 
+  const [addOpen, setAddOpen] = useState(false);
   const [adjustFor, setAdjustFor] = useState<Product | null>(null);
   const [editFor, setEditFor] = useState<Product | null>(null);
   const [direction, setDirection] = useState<"in" | "out">("out");
@@ -116,12 +118,18 @@ function InventoryPage() {
 
   return (
     <div className="space-y-4 p-4">
-      <div>
-        <h1 className="text-lg font-bold tracking-tight">Inventory</h1>
-        <p className="text-xs text-muted-foreground">
-          Case-based stock · sold by the case only · {reserve ? "confirmed orders reserve cases until fulfilled" : "stock deducts when an order is completed"}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-lg font-bold tracking-tight">Inventory</h1>
+          <p className="text-xs text-muted-foreground">
+            Case-based stock · sold by the case only · {reserve ? "confirmed orders reserve cases until fulfilled" : "stock deducts when an order is completed"}
+          </p>
+        </div>
+        <Button size="sm" onClick={() => setAddOpen(true)}>
+          <Plus className="mr-1 size-4" /> Add product
+        </Button>
       </div>
+      <AddProductDialog open={addOpen} onOpenChange={setAddOpen} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Stock value (at cost)" value={fmtPeso(totalValue)} />

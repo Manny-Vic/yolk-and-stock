@@ -136,6 +136,7 @@ export interface StoreState {
   // Inventory
   adjustStock: (productId: string, delta: number, reason: string, note?: string) => void;
   updateProduct: (productId: string, patch: Partial<Pick<Product, "name" | "defaultPrice" | "cost" | "reorderThreshold" | "supplierId">>) => void;
+  addProduct: (p: Omit<Product, "id" | "reserved">) => void;
 
   // Customers / suppliers
   addCustomer: (c: Omit<Customer, "id">) => void;
@@ -495,6 +496,13 @@ export const useStore = create<StoreState>()(
             auditLog,
           };
         });
+      },
+
+      addProduct: (input) => {
+        set((state) => ({
+          products: [...state.products, { ...input, id: `p${uid()}`, reserved: 0 }],
+          auditLog: audit(state, "Product added", `${input.name} (${input.size}) — ${fmtPeso(input.defaultPrice)}/case, ${input.cases} case(s) opening stock`),
+        }));
       },
 
       // ---------- Customers / suppliers ----------
