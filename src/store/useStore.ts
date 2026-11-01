@@ -143,7 +143,7 @@ export interface StoreState {
   addSupplier: (s: Omit<Supplier, "id">) => void;
 
   // Purchasing
-  addPurchase: (input: { supplierId: string; items: { productId: string; qty: number; cost: number }[]; deliveryCost: number; expectedDate?: string }) => void;
+  addPurchase: (input: { supplierId: string; items: { productId: string; qty: number; cost: number }[]; deliveryCost: number; expectedDate?: string | undefined }) => void;
   receivePurchase: (purchaseId: string, accepted: Record<string, number>, date: string) => void;
   payPurchase: (purchaseId: string, amount: number, accountId: string) => void;
 
@@ -367,6 +367,7 @@ export const useStore = create<StoreState>()(
           });
           const cashEntries = [...state.cashEntries];
           for (const p of payments) {
+            if (p.method === "credit") continue; // credit sales create no cash movement
             cashEntries.push({
               id: uid(),
               date: today,
