@@ -84,10 +84,10 @@ export function ProductGrid() {
           </div>
         );
       })}
-      <p className="col-span-full flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground">
+      <div className="col-span-full flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground">
         <ToneBadge tone="secondary">Tip</ToneBadge>
         Click a card to add 1 case · use +1 / +5 / +10 to jump · click any number in the order to edit it.
-      </p>
+      </div>
     </div>
   );
 }

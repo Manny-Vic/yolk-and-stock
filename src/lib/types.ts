@@ -90,7 +90,7 @@ export interface Product {
 export interface Customer {
   id: string;
   name: string;
-  phone?: string;
+  phone?: string | undefined;
   /** Credit limit, centavos */
   creditLimit: number;
   /** Payment terms in days */

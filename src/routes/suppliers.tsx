@@ -401,9 +401,7 @@ function SuppliersPage() {
               <Select value={payAccount} onValueChange={setPayAccount}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {accounts
-                    .filter((a) => a.kind !== "credit")
-                    .map((a) => (
+                  {accounts.map((a) => (
                       <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                     ))}
                 </SelectContent>
