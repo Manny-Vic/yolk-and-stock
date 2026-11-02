@@ -119,6 +119,14 @@ export interface StoreState {
   clearCart: () => void;
   loadOrderToCart: (orderId: string) => void;
 
+  // Bulk data clearing
+  clearOrders: () => void;
+  clearPurchases: () => void;
+  clearCustomers: () => void;
+  clearExpenses: () => void;
+  clearCashFlow: () => void;
+  clearAllData: () => void;
+
   // Orders
   completeOrder: (payments: NewPayment[]) => string;
   setOrderStatus: (orderId: string, status: FulfillmentStatus) => void;
