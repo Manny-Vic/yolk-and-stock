@@ -28,7 +28,9 @@ describe("bulk data clearing", () => {
   });
 
   it("clearCustomers removes all customers and resets the cart to walk-in", () => {
-    useStore.getState().updateCart({ customerId: useStore.getState().customers[0].id, customerName: "Someone" });
+    const first = useStore.getState().customers[0];
+    if (!first) throw new Error("Seed data should include at least one customer");
+    useStore.getState().updateCart({ customerId: first.id, customerName: "Someone" });
     useStore.getState().clearCustomers();
     const st = useStore.getState();
     expect(st.customers).toEqual([]);
@@ -73,6 +75,6 @@ describe("bulk data clearing", () => {
     expect(after.suppliers.length).toBe(before.suppliers.length);
     expect(after.settings).toEqual(before.settings);
     expect(after.auditLog).toHaveLength(1);
-    expect(after.auditLog[0].action).toBe("Data cleared");
+    expect(after.auditLog[0]?.action).toBe("Data cleared");
   });
 });
