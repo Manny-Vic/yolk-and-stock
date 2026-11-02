@@ -49,6 +49,7 @@ export function AddProductDialog({ open, onOpenChange }: { open: boolean; onOpen
     toast.success(`${n} added — it's now on the POS screen`);
     reset();
     onOpenChange(false);
+    return undefined;
   };
 
   return (
