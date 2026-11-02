@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -127,6 +127,8 @@ function SettingsPage() {
         </ul>
       </section>
 
+      <ClearDataSection />
+
       <section className="rounded-xl border border-destructive/30 bg-card p-4 shadow-card">
         <h2 className="mb-1 text-sm font-bold text-destructive">Prototype data</h2>
         <p className="mb-3 text-xs text-muted-foreground">
@@ -173,5 +175,122 @@ function ToggleRow({ label, hint, checked, onChange }: { label: string; hint: st
       </div>
       <Switch checked={checked} onCheckedChange={onChange} />
     </div>
+  );
+}
+
+const CLEAR_ITEMS = [
+  { key: "orders", label: "Orders", title: "Delete all orders?", description: "Every order and its payments are removed, and reserved cases are released. Product stock levels and cash flow records are not changed." },
+  { key: "purchases", label: "Purchases", title: "Delete all purchase orders?", description: "Every purchase order record is removed. Product stock levels and supplier payments in cash flow are not changed." },
+  { key: "customers", label: "Customers", title: "Delete all customer accounts?", description: "Every customer and their credit terms are removed. The current order switches back to Walk-in Customer." },
+  { key: "expenses", label: "Expenses", title: "Delete all expenses?", description: "Every expense record is removed, along with the cash flow entries they created." },
+  { key: "cashflow", label: "Cash flow", title: "Delete all cash flow records?", description: "Every cash entry is removed and each account returns to its opening balance. Orders, expenses, and purchases are not changed." },
+] as const;
+
+function ClearDataSection() {
+  const clearOrders = useStore((s) => s.clearOrders);
+  const clearPurchases = useStore((s) => s.clearPurchases);
+  const clearCustomers = useStore((s) => s.clearCustomers);
+  const clearExpenses = useStore((s) => s.clearExpenses);
+  const clearCashFlow = useStore((s) => s.clearCashFlow);
+  const clearAllData = useStore((s) => s.clearAllData);
+  const orders = useStore((s) => s.orders.length);
+  const purchases = useStore((s) => s.purchases.length);
+  const customers = useStore((s) => s.customers.length);
+  const expenses = useStore((s) => s.expenses.length);
+  const cashEntries = useStore((s) => s.cashEntries.length);
+  const counts: Record<(typeof CLEAR_ITEMS)[number]["key"], number | null> = {
+    orders,
+    purchases,
+    customers,
+    expenses,
+    cashflow: cashEntries,
+  };
+  const actions: Record<(typeof CLEAR_ITEMS)[number]["key"], () => void> = {
+    orders: clearOrders,
+    purchases: clearPurchases,
+    customers: clearCustomers,
+    expenses: clearExpenses,
+    cashflow: clearCashFlow,
+  };
+  const total = orders + purchases + customers + expenses + cashEntries;
+
+  return (
+    <section className="rounded-xl border bg-card p-4 shadow-card">
+      <h2 className="mb-1 text-sm font-bold">Clear data</h2>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Delete records one area at a time. Products, suppliers, and store settings are always kept.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {CLEAR_ITEMS.map((item) => (
+          <ClearButton
+            key={item.key}
+            label={`Clear ${item.label.toLowerCase()}`}
+            count={counts[item.key]}
+            title={item.title}
+            description={item.description}
+            onConfirm={() => {
+              actions[item.key]();
+              toast.success(`All ${item.label.toLowerCase()} deleted`);
+            }}
+          />
+        ))}
+      </div>
+      <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+        <div className="text-[13px] font-semibold text-destructive">Clear everything</div>
+        <div className="mb-2.5 text-[11px] text-muted-foreground">
+          Deletes all orders, purchases, customers, expenses, and cash flow records ({total} record{total === 1 ? "" : "s"} right now), and empties the audit trail. Products, suppliers, and settings are kept.
+        </div>
+        <ClearButton
+          label="Clear everything"
+          destructive
+          title="Clear all business data?"
+          description="All orders, purchases, customers, expenses, and cash flow records are deleted, and the audit trail is emptied. This cannot be undone. Products, suppliers, and store settings are kept."
+          onConfirm={() => {
+            clearAllData();
+            toast.success("All business data cleared — products, suppliers, and settings kept");
+          }}
+        />
+      </div>
+    </section>
+  );
+}
+
+function ClearButton({ label, count, title, description, onConfirm, destructive }: {
+  label: string;
+  count?: number | null;
+  title: string;
+  description: string;
+  onConfirm: () => void;
+  destructive?: boolean;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={destructive ? "border-destructive/40 text-destructive hover:bg-destructive/10" : undefined}
+        >
+          <Trash2 className="mr-1.5 size-3.5" />
+          {label}
+          {typeof count === "number" ? <span className="ml-1 text-muted-foreground">({count})</span> : null}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description} This cannot be undone.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className={destructive ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : undefined}
+            onClick={onConfirm}
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

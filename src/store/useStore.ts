@@ -119,6 +119,14 @@ export interface StoreState {
   clearCart: () => void;
   loadOrderToCart: (orderId: string) => void;
 
+  // Bulk data clearing
+  clearOrders: () => void;
+  clearPurchases: () => void;
+  clearCustomers: () => void;
+  clearExpenses: () => void;
+  clearCashFlow: () => void;
+  clearAllData: () => void;
+
   // Orders
   completeOrder: (payments: NewPayment[]) => string;
   setOrderStatus: (orderId: string, status: FulfillmentStatus) => void;
@@ -592,6 +600,54 @@ export const useStore = create<StoreState>()(
       updateSettings: (patch) => set((state) => ({ settings: { ...state.settings, ...patch } })),
 
       resetDemo: () => set(freshSeed()),
+
+      // ---------- Bulk data clearing ----------
+      clearOrders: () =>
+        set((state) => ({
+          orders: [],
+          products: state.products.map((p) => ({ ...p, reserved: 0 })),
+          auditLog: audit(state, "Data cleared", "All orders deleted; reservations released"),
+        })),
+
+      clearPurchases: () =>
+        set((state) => ({
+          purchases: [],
+          auditLog: audit(state, "Data cleared", "All purchase orders deleted"),
+        })),
+
+      clearCustomers: () =>
+        set((state) => ({
+          customers: [],
+          cart: { ...state.cart, customerId: null, customerName: "Walk-in Customer" },
+          auditLog: audit(state, "Data cleared", "All customer accounts deleted"),
+        })),
+
+      clearExpenses: () =>
+        set((state) => ({
+          expenses: [],
+          cashEntries: state.cashEntries.filter((e) => e.kind !== "expense"),
+          auditLog: audit(state, "Data cleared", "All expenses deleted, including their cash flow entries"),
+        })),
+
+      clearCashFlow: () =>
+        set((state) => ({
+          cashEntries: [],
+          auditLog: audit(state, "Data cleared", "All cash flow entries deleted; accounts return to opening balances"),
+        })),
+
+      clearAllData: () =>
+        set((state) => ({
+          orders: [],
+          purchases: [],
+          customers: [],
+          expenses: [],
+          cashEntries: [],
+          products: state.products.map((p) => ({ ...p, reserved: 0 })),
+          cart: emptyCart(),
+          nextSeqOrder: 1,
+          nextSeqPurchase: 1,
+          auditLog: [{ ts: now(), action: "Data cleared", detail: "All orders, purchases, customers, expenses, and cash flow records deleted" }],
+        })),
     }),
     {
       name: "golden-nest-pos-v1",
