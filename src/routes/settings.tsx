@@ -127,6 +127,8 @@ function SettingsPage() {
         </ul>
       </section>
 
+      <ClearDataSection />
+
       <section className="rounded-xl border border-destructive/30 bg-card p-4 shadow-card">
         <h2 className="mb-1 text-sm font-bold text-destructive">Prototype data</h2>
         <p className="mb-3 text-xs text-muted-foreground">
