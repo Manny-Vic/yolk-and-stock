@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { Eye, EyeOff, Search } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 import { PaymentBadge, StatusBadge } from "@/components/shared/status-badge";
 import { Input } from "@/components/ui/input";
@@ -12,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { calcOrder, paymentStatus } from "@/lib/calc";
+import { calcOrder, calcProfit, fmtMargin, paymentStatus } from "@/lib/calc";
 import { fmtDate, fmtPeso } from "@/lib/money";
 import { ORDER_SOURCES, type FulfillmentStatus } from "@/lib/types";
 import { useStore } from "@/store/useStore";
@@ -43,11 +45,12 @@ function OrdersPage() {
   const [fulStatus, setFulStatus] = useState("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [showProfit, setShowProfit] = useState(true);
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return orders
-      .map((o) => ({ order: o, totals: calcOrder(o), pay: paymentStatus(o) }))
+      .map((o) => ({ order: o, totals: calcOrder(o), profit: calcProfit(o), pay: paymentStatus(o) }))
       .filter(({ order, pay }) => {
         if (needle && !(`${order.id} ${order.customerName}`.toLowerCase().includes(needle))) return false;
         if (source !== "all" && order.source !== source) return false;
@@ -63,6 +66,7 @@ function OrdersPage() {
 
   const totalValue = rows.reduce((s, r) => s + r.totals.total, 0);
   const outstanding = rows.reduce((s, r) => s + r.totals.balance, 0);
+  const totalProfit = rows.filter((r) => r.order.status !== "cancelled").reduce((s, r) => s + r.profit.profit, 0);
 
   return (
     <div className="space-y-4 p-4">
@@ -70,6 +74,7 @@ function OrdersPage() {
         <h1 className="text-lg font-bold tracking-tight">Orders</h1>
         <p className="text-xs text-muted-foreground">
           {rows.length} order{rows.length === 1 ? "" : "s"} shown · {fmtPeso(totalValue)} total · {fmtPeso(outstanding)} outstanding
+          {showProfit ? <> · <span className="font-semibold text-foreground">{fmtPeso(totalProfit)} profit</span></> : null}
         </p>
       </div>
 
@@ -110,6 +115,10 @@ function OrdersPage() {
           From <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 w-36" />
           To <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9 w-36" />
         </div>
+        <Button variant="outline" size="sm" className="ml-auto h-9" onClick={() => setShowProfit((v) => !v)}>
+          {showProfit ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+          {showProfit ? "Hide profit" : "Show profit"}
+        </Button>
       </div>
 
       <div className="overflow-hidden rounded-xl border bg-card shadow-card">
@@ -123,13 +132,14 @@ function OrdersPage() {
               <TableHead className="text-right">Total</TableHead>
               <TableHead className="text-right">Paid</TableHead>
               <TableHead className="text-right">Balance</TableHead>
+              {showProfit ? <TableHead className="text-right">Profit</TableHead> : null}
               <TableHead>Source</TableHead>
               <TableHead>Fulfillment</TableHead>
               <TableHead>Payment</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map(({ order, totals, pay }) => (
+            {rows.map(({ order, totals, profit, pay }) => (
               <TableRow
                 key={order.id}
                 className="cursor-pointer"
@@ -153,6 +163,12 @@ function OrdersPage() {
                 <TableCell className={`text-right tabular-nums ${totals.balance > 0 ? "font-semibold text-warning-foreground" : ""}`}>
                   {fmtPeso(totals.balance)}
                 </TableCell>
+                {showProfit ? (
+                  <TableCell className={`whitespace-nowrap text-right tabular-nums ${profit.profit < 0 ? "text-destructive" : ""}`}>
+                    <span className="font-semibold">{fmtPeso(profit.profit)}</span>{" "}
+                    <span className="text-[11px] text-muted-foreground">{fmtMargin(profit.marginPct)}</span>
+                  </TableCell>
+                ) : null}
                 <TableCell className="max-w-32 truncate text-[12px] text-muted-foreground">{order.source}</TableCell>
                 <TableCell><StatusBadge status={order.status} /></TableCell>
                 <TableCell><PaymentBadge order={order} /></TableCell>
@@ -160,7 +176,7 @@ function OrdersPage() {
             ))}
             {!rows.length ? (
               <TableRow>
-                <TableCell colSpan={10} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={showProfit ? 11 : 10} className="py-10 text-center text-sm text-muted-foreground">
                   No orders match these filters.
                 </TableCell>
               </TableRow>
