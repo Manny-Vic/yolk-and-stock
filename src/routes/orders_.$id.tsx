@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FULFILLMENT_LABELS, calcOrder, perCaseDiscountCents } from "@/lib/calc";
+import { FULFILLMENT_LABELS, calcOrder, calcProfit, fmtMargin, perCaseDiscountCents } from "@/lib/calc";
 import { fmtDate, fmtPeso } from "@/lib/money";
 import { printHtml } from "@/lib/print";
 import type { FulfillmentStatus } from "@/lib/types";
@@ -92,6 +92,7 @@ function OrderDetailPage() {
   }
 
   const t = calcOrder(order);
+  const pr = calcProfit(order);
 
   const submitPayment = () => {
     try {
@@ -303,6 +304,14 @@ function OrderDetailPage() {
           <div className="space-y-1 text-[13px]">
             <Row label="Paid" value={fmtPeso(t.paid)} />
             <Row label="Balance" value={fmtPeso(t.balance)} highlight={t.balance > 0} />
+          </div>
+          <Separator />
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Profitability</h3>
+          <div className="space-y-1 text-[13px]">
+            <Row label="Net sales (excl. delivery)" value={fmtPeso(pr.netSales)} />
+            <Row label="Cost of eggs" value={fmtPeso(pr.cogs)} />
+            <Row label="Gross profit" value={fmtPeso(pr.profit)} highlight={pr.profit < 0} />
+            <Row label="Margin" value={fmtMargin(pr.marginPct)} />
           </div>
         </div>
       </div>
