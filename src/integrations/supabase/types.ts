@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      pos_backups: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      pos_state: {
+        Row: {
+          client_id: string
+          data: Json
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string
+          data: Json
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          data?: Json
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
