@@ -167,3 +167,32 @@ export const STATUS_TONES: Record<FulfillmentStatus, string> = {
   fulfilled: "success",
   cancelled: "destructive",
 };
+
+export interface ProfitCalc {
+  /** Net product sales: line totals − order discount (delivery fee excluded) */
+  netSales: number;
+  /** Σ qty × unit cost */
+  cogs: number;
+  profit: number;
+  /** Whole-number percent of net sales, or null when there are no sales */
+  marginPct: number | null;
+  /** Names of lines whose discounted price per case is below cost */
+  belowCost: string[];
+}
+
+/** Profit per transaction. Delivery fees are excluded (they offset delivery costs). */
+export function calcProfit(o: OrderLike): ProfitCalc {
+  const t = calcOrder(o);
+  const netSales = t.afterLine - t.orderDiscount;
+  const cogs = o.lines.reduce((s, l) => s + l.qty * (l.unitCost || 0), 0);
+  const profit = netSales - cogs;
+  const marginPct = netSales > 0 ? Math.round((profit / netSales) * 1000) / 10 : null;
+  const belowCost = o.lines
+    .filter((l) => l.qty > 0 && calcLine(l).effective < (l.unitCost || 0))
+    .map((l) => l.productName);
+  return { netSales, cogs, profit, marginPct, belowCost };
+}
+
+export function fmtMargin(m: number | null): string {
+  return m === null ? "—" : `${m}%`;
+}

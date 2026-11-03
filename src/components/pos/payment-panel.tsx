@@ -9,6 +9,8 @@ import {
   AlertTriangle,
   Trash2,
   Plus,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { customerStats } from "@/lib/derive";
-import { calcOrder } from "@/lib/calc";
+import { calcOrder, calcProfit, fmtMargin } from "@/lib/calc";
 import { addDaysISO, fmtPeso, parsePeso, todayISO } from "@/lib/money";
 import type { PaymentMethod } from "@/lib/types";
 import { useStore, type NewPayment } from "@/store/useStore";
@@ -58,6 +60,8 @@ export function PaymentPanel({ onCompleted }: { onCompleted: (orderId: string) =
   const completeOrder = useStore((s) => s.completeOrder);
 
   const totals = useMemo(() => calcOrder(cart), [cart]);
+  const profit = useMemo(() => calcProfit(cart), [cart]);
+  const [showProfit, setShowProfit] = useState(false);
   const reserve = settings.reserveOnConfirm;
 
   const [mode, setMode] = useState<PayMode>("cash");
@@ -164,6 +168,36 @@ export function PaymentPanel({ onCompleted }: { onCompleted: (orderId: string) =
             <span className="text-2xl font-extrabold tabular-nums text-primary">{fmtPeso(totals.total)}</span>
           </div>
         </div>
+
+        {cart.lines.length > 0 ? (
+          <div className="rounded-lg border bg-card px-3 py-2 text-[12px]">
+            <button
+              type="button"
+              onClick={() => setShowProfit((v) => !v)}
+              className="flex w-full items-center justify-between text-muted-foreground hover:text-foreground"
+              aria-label={showProfit ? "Hide profit" : "Show profit"}
+            >
+              <span className="flex items-center gap-1.5 font-semibold">
+                {showProfit ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                {showProfit ? "Hide profit" : "Show profit"}
+              </span>
+              {showProfit ? (
+                <span className={cn("font-bold tabular-nums", profit.profit < 0 ? "text-destructive" : "text-foreground")}>
+                  {fmtPeso(profit.profit)} · {fmtMargin(profit.marginPct)}
+                </span>
+              ) : (
+                <span className="tabular-nums">••••</span>
+              )}
+            </button>
+          </div>
+        ) : null}
+
+        {profit.belowCost.length > 0 ? (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-[12px] text-destructive">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <span>Price is below cost for: {profit.belowCost.join(", ")}.</span>
+          </div>
+        ) : null}
 
         {stockWarnings.length > 0 ? (
           <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-[12px] text-destructive">

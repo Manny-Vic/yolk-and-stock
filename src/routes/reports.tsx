@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { calcOrder } from "@/lib/calc";
+import { calcOrder, calcProfit } from "@/lib/calc";
 import { accountBalances, creditAging, inventoryValue, purchasePayable, supplierStats } from "@/lib/derive";
 import { fmtPeso, todayISO } from "@/lib/money";
 import { EXPENSE_CATEGORIES } from "@/lib/types";
@@ -53,8 +53,8 @@ function ReportsPage() {
 
   const sales = inRange.reduce((s, o) => s + calcOrder(o).total, 0);
   const casesSold = inRange.reduce((s, o) => s + calcOrder(o).cases, 0);
-  const cogs = inRange.reduce((s, o) => s + o.lines.reduce((cs, l) => cs + l.qty * l.unitCost, 0), 0);
-  const grossProfit = sales - cogs;
+  const cogs = inRange.reduce((s, o) => s + calcProfit(o).cogs, 0);
+  const grossProfit = inRange.reduce((s, o) => s + calcProfit(o).profit, 0);
   const expensesTotal = expensesInRange.reduce((s, e) => s + e.amount, 0);
   const netEstimate = grossProfit - expensesTotal;
   const receivables = orders
@@ -124,9 +124,8 @@ function ReportsPage() {
     () =>
       inRange
         .map((o) => {
-          const t = calcOrder(o);
-          const cogsOrder = o.lines.reduce((s, l) => s + l.qty * l.unitCost, 0);
-          return { id: o.id, date: o.date, customer: o.customerName, total: t.total, cogs: cogsOrder, gp: t.total - cogsOrder };
+          const p = calcProfit(o);
+          return { id: o.id, date: o.date, customer: o.customerName, total: p.netSales, cogs: p.cogs, gp: p.profit };
         })
         .sort((a, b) => b.gp - a.gp),
     [inRange],
