@@ -14,6 +14,8 @@ export const useSyncStatus = create<{ status: SyncStatus; lastSaved: string | nu
 }));
 
 const SAVE_DEBOUNCE_MS = 1200;
+/** Set when this browser has changes not yet saved to the cloud (e.g. tab closed or offline). */
+const DIRTY_KEY = "golden-nest-unsaved-since";
 const AUTO_BACKUP_EVERY_MS = 24 * 60 * 60 * 1000;
 
 function clientId(): string {
@@ -40,6 +42,7 @@ export async function saveNow(ownerId: string): Promise<boolean> {
     useSyncStatus.setState({ status: navigator.onLine ? "error" : "offline" });
     return false;
   }
+  window.localStorage.removeItem(DIRTY_KEY);
   useSyncStatus.setState({ status: "synced", lastSaved: new Date().toISOString() });
   return true;
 }
@@ -87,6 +90,7 @@ export function useCloudSync(ownerId: string) {
     const schedule = () => {
       if (applyingRemote || !useSyncStatus.getState().ready) return;
       useSyncStatus.setState({ status: "saving" });
+      if (!window.localStorage.getItem(DIRTY_KEY)) window.localStorage.setItem(DIRTY_KEY, new Date().toISOString());
       clearTimeout(timer);
       timer = setTimeout(() => void saveNow(ownerId), SAVE_DEBOUNCE_MS);
     };
@@ -107,7 +111,12 @@ export function useCloudSync(ownerId: string) {
         useSyncStatus.setState({ status: "error", ready: false });
         return;
       }
-      if (data) {
+      const unsavedSince = window.localStorage.getItem(DIRTY_KEY);
+      if (data && unsavedSince && new Date(unsavedSince) > new Date(data.updated_at)) {
+        // This browser has newer unsaved work — keep it and push it up.
+        useSyncStatus.setState({ ready: true });
+        await saveNow(ownerId);
+      } else if (data) {
         applyRemote(data.data);
         useSyncStatus.setState({ status: "synced", ready: true, lastSaved: data.updated_at });
       } else {
