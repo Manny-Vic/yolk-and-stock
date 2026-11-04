@@ -20,7 +20,6 @@ import type {
   Settings,
   Shift,
   Staff,
-  StaffRole,
   Supplier,
 } from "@/lib/types";
 import { shiftSummary } from "@/lib/shift";
