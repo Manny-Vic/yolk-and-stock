@@ -12,7 +12,7 @@ import { fmtPeso, todayISO } from "@/lib/money";
 import { EXPENSE_CATEGORIES } from "@/lib/types";
 import { useStore } from "@/store/useStore";
 
-export const Route = createFileRoute("/reports")({
+export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
     meta: [
       { title: "Reports & Dashboard — Golden Nest Egg Depot" },

@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { fmtPeso, parsePeso } from "@/lib/money";
 import { useStore } from "@/store/useStore";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
       { title: "Settings — Golden Nest Egg Depot" },

@@ -70,6 +70,10 @@ export interface Order {
   reservedCases: number;
   /** True once stock has been deducted for this order exactly once */
   stockDeducted: boolean;
+  /** Staff member who rang up the order */
+  staffName?: string | undefined;
+  /** Shift the order was rung up in */
+  shiftId?: string | undefined;
 }
 
 export interface Product {
@@ -182,12 +186,42 @@ export interface CashEntry {
   kind: CashEntryKind;
   description: string;
   ref?: string | undefined;
+  /** Shift that was open when this entry was recorded */
+  shiftId?: string | undefined;
 }
 
 export interface AuditEntry {
   ts: string;
   action: string;
   detail: string;
+  /** Staff member who was signed in when this happened */
+  by?: string | undefined;
+}
+
+export type StaffRole = "owner" | "cashier";
+
+export interface Staff {
+  id: string;
+  name: string;
+  role: StaffRole;
+  /** SHA-256 of `${id}:${pin}` — never the raw PIN */
+  pinHash: string;
+}
+
+export interface Shift {
+  id: string;
+  staffId: string;
+  staffName: string;
+  openedAt: string;
+  /** Cash put in the drawer for change, centavos */
+  openingFloat: number;
+  closedAt?: string | undefined;
+  closedBy?: string | undefined;
+  /** Cash physically counted at close, centavos */
+  countedCash?: number | undefined;
+  /** What the system expected in the drawer at close, centavos */
+  expectedCash?: number | undefined;
+  notes?: string | undefined;
 }
 
 export interface Settings {
@@ -202,4 +236,6 @@ export interface Settings {
   allowOverDiscount: boolean;
   /** Credit sales above this (centavos) show an approval warning */
   creditApprovalLimit: number;
+  /** Cashiers need an owner PIN for any line discount above this percent */
+  maxCashierDiscountPct?: number | undefined;
 }

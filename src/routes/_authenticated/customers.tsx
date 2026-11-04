@@ -23,7 +23,7 @@ import { printHtml } from "@/lib/print";
 import type { Customer } from "@/lib/types";
 import { METHOD_LABEL, useStore } from "@/store/useStore";
 
-export const Route = createFileRoute("/customers")({
+export const Route = createFileRoute("/_authenticated/customers")({
   head: () => ({
     meta: [
       { title: "Customers & Credit — Golden Nest Egg Depot" },

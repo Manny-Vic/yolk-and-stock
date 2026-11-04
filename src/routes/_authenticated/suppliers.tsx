@@ -28,7 +28,7 @@ import { fmtDate, fmtPeso, parsePeso, parseQty, todayISO } from "@/lib/money";
 import type { Supplier } from "@/lib/types";
 import { METHOD_ACCOUNT, useStore } from "@/store/useStore";
 
-export const Route = createFileRoute("/suppliers")({
+export const Route = createFileRoute("/_authenticated/suppliers")({
   head: () => ({
     meta: [
       { title: "Purchases & Suppliers — Golden Nest Egg Depot" },

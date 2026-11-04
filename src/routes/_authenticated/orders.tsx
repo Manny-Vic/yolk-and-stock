@@ -19,7 +19,7 @@ import { fmtDate, fmtPeso } from "@/lib/money";
 import { ORDER_SOURCES, type FulfillmentStatus } from "@/lib/types";
 import { useStore } from "@/store/useStore";
 
-export const Route = createFileRoute("/orders")({
+export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({
     meta: [
       { title: "Orders — Golden Nest Egg Depot" },

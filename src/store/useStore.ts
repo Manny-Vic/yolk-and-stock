@@ -18,8 +18,11 @@ import type {
   Product,
   PurchaseOrder,
   Settings,
+  Shift,
+  Staff,
   Supplier,
 } from "@/lib/types";
+import { shiftSummary } from "@/lib/shift";
 import {
   SEED_ACCOUNTS,
   SEED_AUDIT,
@@ -107,6 +110,21 @@ export interface StoreState {
   cart: Cart;
   nextSeqOrder: number;
   nextSeqPurchase: number;
+  staff: Staff[];
+  shifts: Shift[];
+  /** Staff member currently using this device — never synced, cleared on reload */
+  activeStaffId: string | null;
+
+  // Staff & shifts
+  addStaff: (s: Staff) => void;
+  removeStaff: (id: string) => void;
+  setStaffPinHash: (id: string, pinHash: string) => void;
+  signInStaff: (id: string) => void;
+  signOutStaff: () => void;
+  openShift: (openingFloat: number) => void;
+  closeShift: (countedCash: number, notes?: string) => Shift | null;
+  /** Replace synced business data with a snapshot (cloud load / restore) */
+  applySnapshot: (data: Partial<SyncedState>) => void;
 
   // Cart / POS
   addToCart: (productId: string, qty?: number) => void;
@@ -164,8 +182,44 @@ export interface StoreState {
   resetDemo: () => void;
 }
 
-function audit(state: { auditLog: AuditEntry[] }, action: string, detail: string): AuditEntry[] {
-  return [{ ts: now(), action, detail }, ...state.auditLog].slice(0, 300);
+/** Keys of the store that are business data shared across devices. */
+export const SYNCED_KEYS = [
+  "products",
+  "customers",
+  "suppliers",
+  "orders",
+  "expenses",
+  "accounts",
+  "cashEntries",
+  "purchases",
+  "auditLog",
+  "settings",
+  "nextSeqOrder",
+  "nextSeqPurchase",
+  "staff",
+  "shifts",
+] as const;
+export type SyncedState = Pick<StoreState, (typeof SYNCED_KEYS)[number]>;
+
+export function pickSynced(s: StoreState): SyncedState {
+  const out: Record<string, unknown> = {};
+  for (const k of SYNCED_KEYS) out[k] = s[k];
+  return out as SyncedState;
+}
+
+type AuditCtx = { auditLog: AuditEntry[]; staff?: Staff[]; activeStaffId?: string | null };
+
+function staffName(state: AuditCtx): string | undefined {
+  return state.staff?.find((x) => x.id === state.activeStaffId)?.name;
+}
+
+function audit(state: AuditCtx, action: string, detail: string): AuditEntry[] {
+  return [{ ts: now(), action, detail, by: staffName(state) }, ...state.auditLog].slice(0, 500);
+}
+
+/** Id of the shift currently open, if any. */
+export function openShiftId(state: { shifts: Shift[] }): string | undefined {
+  return state.shifts.find((x) => !x.closedAt)?.id;
 }
 
 function freshSeed() {
@@ -190,6 +244,85 @@ export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
       ...freshSeed(),
+      staff: [],
+      shifts: [],
+      activeStaffId: null,
+
+      // ---------- Staff & shifts ----------
+      addStaff: (member) =>
+        set((state) => ({
+          staff: [...state.staff, member],
+          auditLog: audit(state, "Staff added", `${member.name} (${member.role})`),
+        })),
+      removeStaff: (id) =>
+        set((state) => {
+          const m = state.staff.find((x) => x.id === id);
+          if (!m) return {};
+          const owners = state.staff.filter((x) => x.role === "owner");
+          if (m.role === "owner" && owners.length <= 1) return {};
+          return {
+            staff: state.staff.filter((x) => x.id !== id),
+            activeStaffId: state.activeStaffId === id ? null : state.activeStaffId,
+            auditLog: audit(state, "Staff removed", m.name),
+          };
+        }),
+      setStaffPinHash: (id, pinHash) =>
+        set((state) => ({
+          staff: state.staff.map((x) => (x.id === id ? { ...x, pinHash } : x)),
+          auditLog: audit(state, "PIN changed", state.staff.find((x) => x.id === id)?.name ?? id),
+        })),
+      signInStaff: (id) =>
+        set((state) => ({
+          activeStaffId: id,
+          auditLog: audit({ ...state, activeStaffId: id }, "Staff signed in", state.staff.find((x) => x.id === id)?.name ?? id),
+        })),
+      signOutStaff: () => set({ activeStaffId: null, cart: emptyCart() }),
+
+      openShift: (openingFloat) => {
+        const st = get();
+        if (openShiftId(st)) throw new Error("A shift is already open. Close it first.");
+        const me = st.staff.find((x) => x.id === st.activeStaffId);
+        if (!me) throw new Error("Sign in with your PIN first.");
+        if (openingFloat < 0) throw new Error("Opening float cannot be negative.");
+        const shift: Shift = { id: `SH-${uid()}`, staffId: me.id, staffName: me.name, openedAt: now(), openingFloat };
+        set((state) => ({
+          shifts: [shift, ...state.shifts],
+          auditLog: audit(state, "Shift opened", `${me.name} — opening float ${fmtPeso(openingFloat)}`),
+        }));
+      },
+
+      closeShift: (countedCash, notes) => {
+        const st = get();
+        const id = openShiftId(st);
+        const shift = st.shifts.find((x) => x.id === id);
+        if (!shift) return null;
+        if (countedCash < 0) throw new Error("Counted cash cannot be negative.");
+        const expectedCash = shiftSummary(shift, st.cashEntries).expectedCash;
+        const closed: Shift = {
+          ...shift,
+          closedAt: now(),
+          closedBy: staffName(st),
+          countedCash,
+          expectedCash,
+          notes: notes || undefined,
+        };
+        const diff = countedCash - expectedCash;
+        set((state) => ({
+          shifts: state.shifts.map((x) => (x.id === shift.id ? closed : x)),
+          auditLog: audit(
+            state,
+            "Shift closed",
+            `Expected ${fmtPeso(expectedCash)}, counted ${fmtPeso(countedCash)} — ${diff === 0 ? "balanced" : diff > 0 ? `over ${fmtPeso(diff)}` : `short ${fmtPeso(-diff)}`}`,
+          ),
+        }));
+        return closed;
+      },
+
+      applySnapshot: (data) => {
+        const patch: Record<string, unknown> = {};
+        for (const k of SYNCED_KEYS) if (data[k] !== undefined) patch[k] = data[k];
+        set(patch as Partial<StoreState>);
+      },
 
       // ---------- Cart / POS ----------
       addToCart: (productId, qty = 1) => {
@@ -333,6 +466,8 @@ export const useStore = create<StoreState>()(
         if (payments.some((p) => p.amount <= 0)) throw new Error("Payment amounts must be greater than zero.");
         const credit = payments.find((p) => p.method === "credit");
         if (credit && !cart.customerId) throw new Error("Credit sales require a customer account.");
+        const shiftId = openShiftId(st);
+        if (!shiftId) throw new Error("Open a shift before taking orders.");
 
         const seq = st.nextSeqOrder;
         const id = `ORD-${seq}`;
@@ -366,6 +501,8 @@ export const useStore = create<StoreState>()(
           status: "confirmed",
           reservedCases: reserve ? t.cases : 0,
           stockDeducted: !reserve,
+          staffName: staffName(st),
+          shiftId,
         };
 
         set((state) => {
@@ -386,6 +523,7 @@ export const useStore = create<StoreState>()(
               kind: "sale",
               description: `${METHOD_LABEL[p.method]} payment for ${id}`,
               ref: p.reference,
+              shiftId: openShiftId(state),
             });
           }
           const log = credit
@@ -465,6 +603,7 @@ export const useStore = create<StoreState>()(
               kind: "customer_payment",
               description: `${METHOD_LABEL[input.method]} payment for ${orderId}`,
               ref: payment.reference,
+              shiftId: openShiftId(state),
             },
           ],
           auditLog: audit(state, "Payment recorded", `${orderId} — ${fmtPeso(input.amount)} via ${METHOD_LABEL[input.method]}`),
@@ -574,7 +713,7 @@ export const useStore = create<StoreState>()(
             ),
             cashEntries: [
               ...state.cashEntries,
-              { id: uid(), date: todayISO(), accountId, direction: "out", amount, kind: "supplier_payment", description: `Payment for ${po.id}` },
+              { id: uid(), date: todayISO(), accountId, direction: "out", amount, kind: "supplier_payment", description: `Payment for ${po.id}`, shiftId: openShiftId(state) },
             ],
             auditLog: audit(state, "Supplier payment", `${po.id} — ${fmtPeso(amount)}`),
           };
@@ -587,19 +726,22 @@ export const useStore = create<StoreState>()(
           expenses: [{ ...e, id: uid() }, ...state.expenses],
           cashEntries: [
             ...state.cashEntries,
-            { id: uid(), date: e.date, accountId: METHOD_ACCOUNT[e.method], direction: "out", amount: e.amount, kind: "expense", description: `${e.category} — ${e.payee}` },
+            { id: uid(), date: e.date, accountId: METHOD_ACCOUNT[e.method], direction: "out", amount: e.amount, kind: "expense", description: `${e.category} — ${e.payee}`, shiftId: openShiftId(state) },
           ],
           auditLog: audit(state, "Expense recorded", `${e.category} — ${fmtPeso(e.amount)} via ${METHOD_LABEL[e.method]}`),
         }));
       },
 
       addCashEntry: (e) => {
-        set((state) => ({ cashEntries: [{ ...e, id: uid() }, ...state.cashEntries] }));
+        set((state) => ({
+          cashEntries: [{ ...e, id: uid(), shiftId: e.shiftId ?? openShiftId(state) }, ...state.cashEntries],
+          auditLog: audit(state, "Cash entry", `${e.kind.replace("_", " ")} — ${fmtPeso(e.amount)}`),
+        }));
       },
 
       updateSettings: (patch) => set((state) => ({ settings: { ...state.settings, ...patch } })),
 
-      resetDemo: () => set(freshSeed()),
+      resetDemo: () => set((state) => ({ ...freshSeed(), shifts: [], auditLog: audit({ ...state, auditLog: [] }, "Demo data reset", "Sample data restored") })),
 
       // ---------- Bulk data clearing ----------
       clearOrders: () =>
@@ -646,7 +788,8 @@ export const useStore = create<StoreState>()(
           cart: emptyCart(),
           nextSeqOrder: 1,
           nextSeqPurchase: 1,
-          auditLog: [{ ts: now(), action: "Data cleared", detail: "All orders, purchases, customers, expenses, and cash flow records deleted" }],
+          shifts: [],
+          auditLog: [{ ts: now(), action: "Data cleared", detail: "All orders, purchases, customers, expenses, cash flow records, and shifts deleted", by: staffName(state) }],
         })),
     }),
     {
@@ -654,6 +797,11 @@ export const useStore = create<StoreState>()(
       version: 1,
       // Hydrate manually from the root component to avoid SSR mismatches.
       skipHydration: true,
+      // Who is at the till is per-device and must re-enter their PIN after reload.
+      partialize: (s) => {
+        const { activeStaffId: _a, ...rest } = s;
+        return rest;
+      },
     },
   ),
 );
