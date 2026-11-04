@@ -44,7 +44,7 @@ import type { FulfillmentStatus } from "@/lib/types";
 import { METHOD_LABEL, useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/orders_/$id")({
+export const Route = createFileRoute("/_authenticated/orders_/$id")({
   head: () => ({
     meta: [
       { title: "Order details — Golden Nest Egg Depot" },

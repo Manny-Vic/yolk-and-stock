@@ -37,7 +37,7 @@ const ADJUST_REASONS = [
   "Other adjustment",
 ] as const;
 
-export const Route = createFileRoute("/inventory")({
+export const Route = createFileRoute("/_authenticated/inventory")({
   head: () => ({
     meta: [
       { title: "Inventory — Golden Nest Egg Depot" },

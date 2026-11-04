@@ -26,7 +26,7 @@ import { fmtDate, fmtPeso, parsePeso, todayISO } from "@/lib/money";
 import { EXPENSE_CATEGORIES } from "@/lib/types";
 import { METHOD_LABEL, useStore } from "@/store/useStore";
 
-export const Route = createFileRoute("/expenses")({
+export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({
     meta: [
       { title: "Expenses — Golden Nest Egg Depot" },

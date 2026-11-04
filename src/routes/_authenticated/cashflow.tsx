@@ -48,7 +48,7 @@ const KIND_LABEL: Record<string, string> = {
   transfer: "Transfer",
 };
 
-export const Route = createFileRoute("/cashflow")({
+export const Route = createFileRoute("/_authenticated/cashflow")({
   head: () => ({
     meta: [
       { title: "Cash Flow — Golden Nest Egg Depot" },
