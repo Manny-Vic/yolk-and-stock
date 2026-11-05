@@ -3,6 +3,7 @@ import {
   BarChart3,
   ClipboardList,
   Coins,
+  DoorOpen,
   Package,
   ReceiptText,
   Settings,
@@ -28,6 +29,7 @@ import { useStore } from "@/store/useStore";
 const items = [
   { title: "POS / New Order", url: "/", icon: ShoppingBasket },
   { title: "Orders", url: "/orders", icon: ClipboardList },
+  { title: "Shifts & Drawer", url: "/shifts", icon: DoorOpen },
   { title: "Inventory", url: "/inventory", icon: Package },
   { title: "Purchases & Suppliers", url: "/suppliers", icon: Truck },
   { title: "Customers & Credit", url: "/customers", icon: Users },
