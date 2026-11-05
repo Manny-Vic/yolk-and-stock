@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedCashflowRouteImport } from './routes/_authenticated/cashflow'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
@@ -20,58 +22,69 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedOrdersIdRouteImport } from './routes/_authenticated/orders_.$id'
 
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/_authenticated/',
-  path: '/',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCashflowRoute = AuthenticatedCashflowRouteImport.update({
-  id: '/_authenticated/cashflow',
+  id: '/cashflow',
   path: '/cashflow',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
-  id: '/_authenticated/customers',
+  id: '/customers',
   path: '/customers',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
-  id: '/_authenticated/expenses',
+  id: '/expenses',
   path: '/expenses',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
-  id: '/_authenticated/inventory',
+  id: '/inventory',
   path: '/inventory',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
-  id: '/_authenticated/orders',
+  id: '/orders',
   path: '/orders',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/_authenticated/reports',
+  id: '/reports',
   path: '/reports',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/_authenticated/settings',
+  id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
-  id: '/_authenticated/suppliers',
+  id: '/suppliers',
   path: '/suppliers',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedOrdersIdRoute = AuthenticatedOrdersIdRouteImport.update({
-  id: '/_authenticated/orders_/$id',
+  id: '/orders_/$id',
   path: '/orders/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRoute
   '/cashflow': typeof AuthenticatedCashflowRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/expenses': typeof AuthenticatedExpensesRoute
@@ -80,10 +93,10 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
-  '/': typeof AuthenticatedIndexRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
 }
 export interface FileRoutesByTo {
+  '/auth': typeof AuthRoute
   '/cashflow': typeof AuthenticatedCashflowRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/expenses': typeof AuthenticatedExpensesRoute
@@ -97,6 +110,8 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
   '/_authenticated/cashflow': typeof AuthenticatedCashflowRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
@@ -111,6 +126,8 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
+    | '/auth'
     | '/cashflow'
     | '/customers'
     | '/expenses'
@@ -119,10 +136,10 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/suppliers'
-    | '/'
     | '/orders/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/auth'
     | '/cashflow'
     | '/customers'
     | '/expenses'
@@ -135,6 +152,8 @@ export interface FileRouteTypes {
     | '/orders/$id'
   id:
     | '__root__'
+    | '/_authenticated'
+    | '/auth'
     | '/_authenticated/cashflow'
     | '/_authenticated/customers'
     | '/_authenticated/expenses'
@@ -148,6 +167,100 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cashflow': {
+      id: '/_authenticated/cashflow'
+      path: '/cashflow'
+      fullPath: '/cashflow'
+      preLoaderRoute: typeof AuthenticatedCashflowRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/customers': {
+      id: '/_authenticated/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof AuthenticatedCustomersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/expenses': {
+      id: '/_authenticated/expenses'
+      path: '/expenses'
+      fullPath: '/expenses'
+      preLoaderRoute: typeof AuthenticatedExpensesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory': {
+      id: '/_authenticated/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/orders': {
+      id: '/_authenticated/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/suppliers': {
+      id: '/_authenticated/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof AuthenticatedSuppliersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/orders_/$id': {
+      id: '/_authenticated/orders_/$id'
+      path: '/orders/$id'
+      fullPath: '/orders/$id'
+      preLoaderRoute: typeof AuthenticatedOrdersIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+  }
+}
+
+interface AuthenticatedRouteRouteChildren {
   AuthenticatedCashflowRoute: typeof AuthenticatedCashflowRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
@@ -160,82 +273,7 @@ export interface RootRouteChildren {
   AuthenticatedOrdersIdRoute: typeof AuthenticatedOrdersIdRoute
 }
 
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/cashflow': {
-      id: '/_authenticated/cashflow'
-      path: '/cashflow'
-      fullPath: '/cashflow'
-      preLoaderRoute: typeof AuthenticatedCashflowRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/customers': {
-      id: '/_authenticated/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof AuthenticatedCustomersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/expenses': {
-      id: '/_authenticated/expenses'
-      path: '/expenses'
-      fullPath: '/expenses'
-      preLoaderRoute: typeof AuthenticatedExpensesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/inventory': {
-      id: '/_authenticated/inventory'
-      path: '/inventory'
-      fullPath: '/inventory'
-      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/orders': {
-      id: '/_authenticated/orders'
-      path: '/orders'
-      fullPath: '/orders'
-      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/suppliers': {
-      id: '/_authenticated/suppliers'
-      path: '/suppliers'
-      fullPath: '/suppliers'
-      preLoaderRoute: typeof AuthenticatedSuppliersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/orders_/$id': {
-      id: '/_authenticated/orders_/$id'
-      path: '/orders/$id'
-      fullPath: '/orders/$id'
-      preLoaderRoute: typeof AuthenticatedOrdersIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-  }
-}
-
-const rootRouteChildren: RootRouteChildren = {
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCashflowRoute: AuthenticatedCashflowRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
@@ -246,6 +284,14 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedOrdersIdRoute: AuthenticatedOrdersIdRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+const rootRouteChildren: RootRouteChildren = {
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
