@@ -43,6 +43,7 @@ import { printHtml } from "@/lib/print";
 import type { FulfillmentStatus } from "@/lib/types";
 import { METHOD_LABEL, useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
+import { requestOwnerApproval } from "@/components/staff/owner-approval";
 
 export const Route = createFileRoute("/_authenticated/orders_/$id")({
   head: () => ({
@@ -212,7 +213,11 @@ function OrderDetailPage() {
                   <AlertDialogCancel>Keep order</AlertDialogCancel>
                   <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={() => advance("cancelled", "Cancelled")}
+                    onClick={() => {
+                      void requestOwnerApproval(`Cancel ${order.id}?`, ["Cancelling (voiding) an order needs an owner PIN."]).then((ok) => {
+                        if (ok) advance("cancelled", "Cancelled");
+                      });
+                    }}
                   >
                     Cancel order
                   </AlertDialogAction>
