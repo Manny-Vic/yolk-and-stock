@@ -30,7 +30,10 @@ import { customerStats } from "@/lib/derive";
 import { calcOrder, calcProfit, fmtMargin } from "@/lib/calc";
 import { addDaysISO, fmtPeso, parsePeso, todayISO } from "@/lib/money";
 import type { PaymentMethod } from "@/lib/types";
-import { useStore, type NewPayment } from "@/store/useStore";
+import { openShiftId, useStore, type NewPayment } from "@/store/useStore";
+import { requestOwnerApproval } from "@/components/staff/owner-approval";
+import { DEFAULT_MAX_CASHIER_DISCOUNT_PCT, checkoutApprovalReasons } from "@/lib/approval";
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 type PayMode = Exclude<PaymentMethod, "credit"> | "credit" | "split";
@@ -58,6 +61,7 @@ export function PaymentPanel({ onCompleted }: { onCompleted: (orderId: string) =
   const orders = useStore((s) => s.orders);
   const settings = useStore((s) => s.settings);
   const completeOrder = useStore((s) => s.completeOrder);
+  const shiftOpen = useStore((s) => !!openShiftId(s));
 
   const totals = useMemo(() => calcOrder(cart), [cart]);
   const profit = useMemo(() => calcProfit(cart), [cart]);
@@ -131,9 +135,18 @@ export function PaymentPanel({ onCompleted }: { onCompleted: (orderId: string) =
     ];
   };
 
-  const onComplete = () => {
+  const onComplete = async () => {
     try {
       const payments = buildPayments();
+      const reasons = checkoutApprovalReasons(cart, settings.maxCashierDiscountPct ?? DEFAULT_MAX_CASHIER_DISCOUNT_PCT);
+      const creditPay = payments.find((p) => p.method === "credit");
+      if (creditPay && customer && (customerStatsRow?.outstanding ?? 0) + creditPay.amount > customer.creditLimit) {
+        reasons.push(`${customer.name} would go over their ${fmtPeso(customer.creditLimit)} credit limit`);
+      }
+      if (reasons.length && !(await requestOwnerApproval("This order needs an owner PIN before it can be confirmed.", reasons))) {
+        toast.message("Order not confirmed", { description: "Owner approval was cancelled." });
+        return;
+      }
       const id = completeOrder(payments);
       toast.success(`Order ${id} confirmed`, { description: `${totals.cases} cases · ${fmtPeso(totals.total)}` });
       setMode("cash");
@@ -147,7 +160,7 @@ export function PaymentPanel({ onCompleted }: { onCompleted: (orderId: string) =
     }
   };
 
-  const canComplete = cart.lines.length > 0 && stockWarnings.length === 0;
+  const canComplete = cart.lines.length > 0 && stockWarnings.length === 0 && shiftOpen;
 
   const creditNewOutstanding = (customerStatsRow?.outstanding ?? 0) + totals.total;
 
@@ -378,11 +391,15 @@ export function PaymentPanel({ onCompleted }: { onCompleted: (orderId: string) =
           size="lg"
           className="h-12 w-full text-base font-bold shadow-card"
           disabled={!canComplete}
-          onClick={onComplete}
+          onClick={() => void onComplete()}
         >
           Confirm Order · {fmtPeso(totals.total)}
         </Button>
-        {!canComplete && stockWarnings.length === 0 ? (
+        {!shiftOpen ? (
+          <p className="mt-1.5 text-center text-[11px] font-semibold text-warning-foreground">
+            No shift is open. <Link to="/shifts" className="underline">Open a shift</Link> to take orders.
+          </p>
+        ) : !canComplete && stockWarnings.length === 0 ? (
           <p className="mt-1.5 text-center text-[11px] text-muted-foreground">Add products to the order first.</p>
         ) : null}
       </div>
