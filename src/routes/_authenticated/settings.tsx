@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { Lock, RotateCcw, Trash2 } from "lucide-react";
+import { BackupSection, StaffSection } from "@/components/settings/staff-section";
+import { requestOwnerApproval } from "@/components/staff/owner-approval";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -35,8 +37,23 @@ export const Route = createFileRoute("/_authenticated/settings")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: SettingsPage,
+  component: SettingsGate,
 });
+
+/** Settings (including clearing data) is owner-only: cashiers must enter an owner PIN. */
+function SettingsGate() {
+  const isOwner = useStore((s) => s.staff.find((x) => x.id === s.activeStaffId)?.role === "owner");
+  const [unlocked, setUnlocked] = useState(false);
+  if (isOwner || unlocked) return <SettingsPage />;
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+      <Lock className="size-8 text-muted-foreground" />
+      <p className="text-sm font-semibold">Settings are for owners only</p>
+      <p className="max-w-xs text-xs text-muted-foreground">Ask an owner to enter their PIN to open this page.</p>
+      <Button onClick={() => void requestOwnerApproval("Open Settings").then(setUnlocked)}>Enter owner PIN</Button>
+    </div>
+  );
+}
 
 function SettingsPage() {
   const settings = useStore((s) => s.settings);
@@ -113,26 +130,31 @@ function SettingsPage() {
         </div>
       </section>
 
+      <StaffSection />
+
       <section className="rounded-xl border bg-card p-4 shadow-card">
         <h2 className="mb-3 text-sm font-bold">Audit trail</h2>
         <ul className="max-h-64 space-y-1.5 overflow-y-auto text-[12px]">
-          {auditLog.slice(0, 20).map((a, i) => (
+          {auditLog.slice(0, 50).map((a, i) => (
             <li key={i} className="flex gap-2 border-b border-border/50 pb-1.5">
               <span className="shrink-0 font-semibold">{new Date(a.ts).toLocaleString("en-PH", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
               <span>
                 <span className="font-semibold">{a.action}</span> — {a.detail}
+                {a.by ? <span className="text-muted-foreground"> · {a.by}</span> : null}
               </span>
             </li>
           ))}
         </ul>
       </section>
 
+      <BackupSection />
+
       <ClearDataSection />
 
       <section className="rounded-xl border border-destructive/30 bg-card p-4 shadow-card">
-        <h2 className="mb-1 text-sm font-bold text-destructive">Prototype data</h2>
+        <h2 className="mb-1 text-sm font-bold text-destructive">Demo data</h2>
         <p className="mb-3 text-xs text-muted-foreground">
-          Records are stored locally in this browser, so refreshing keeps your changes. Resetting restores the original sample data.
+          Resetting replaces your records with the original sample data. Your staff PINs are kept, and you can undo it from Cloud backups.
         </p>
         <AlertDialog>
           <AlertDialogTrigger asChild>
