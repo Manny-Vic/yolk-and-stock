@@ -36,7 +36,7 @@ export function receiptHtml(order: Order, settings: Settings): string {
   <h1>${settings.storeName}</h1>
   <div class="muted">${settings.address} · ${settings.phone}</div>
   <div class="section"><b>Order</b>${order.id} · ${fmtDate(order.date)} · ${FULFILLMENT_LABELS[order.status]}</div>
-  <div class="section"><b>Customer</b>${order.customerName}${order.customerId ? "" : " (walk-in)"} · Source: ${order.source}${order.sourceDetail ? ` (${order.sourceDetail})` : ""}</div>
+  <div class="section"><b>Customer</b>${order.customerName}${order.customerId ? "" : " (walk-in)"} · Source: ${order.source}${order.sourceDetail ? ` (${order.sourceDetail})` : ""}${order.staffName ? ` · Cashier: ${order.staffName}` : ""}</div>
   <table><thead><tr><th>Product</th><th class="num">Amount</th></tr></thead><tbody>
     ${lineRows}
     ${order.orderDiscount > 0 ? `<tr><td>Order discount (${order.orderDiscountType === "percent" ? `${order.orderDiscount}%` : ""})</td><td class="num">−${fmtPeso(t.orderDiscount)}</td></tr>` : ""}
@@ -134,6 +134,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: { order: Order | nu
 
           <div className="grid gap-1 text-[12px] text-muted-foreground">
             <div>Source: <span className="font-semibold text-foreground">{order.source}{order.sourceDetail ? ` — ${order.sourceDetail}` : ""}</span></div>
+            {order.staffName ? <div>Cashier: <span className="font-semibold text-foreground">{order.staffName}</span></div> : null}
             <div>Fulfillment: <span className="font-semibold text-foreground">{order.fulfillment === "delivery" ? "Delivery" : "Store pickup"}{order.requestedDate ? ` · ${fmtDate(order.requestedDate)}` : ""}</span></div>
             {order.notes ? <div>Notes: {order.notes}</div> : null}
             {order.staffNotes ? <div>Staff notes: {order.staffNotes}</div> : null}

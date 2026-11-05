@@ -144,6 +144,7 @@ function OrderDetailPage() {
             <p className="text-xs text-muted-foreground">
               {fmtDate(order.date)} · {order.customerName} · {order.source}
               {order.sourceDetail ? ` (${order.sourceDetail})` : ""}
+              {order.staffName ? ` · Cashier: ${order.staffName}` : ""}
             </p>
           </div>
         </div>
