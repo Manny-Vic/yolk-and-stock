@@ -43,9 +43,9 @@ function FirstOwnerSetup() {
   const [confirm, setConfirm] = useState("");
 
   const save = async () => {
-    if (!name.trim()) return toast.error("Enter the owner's name.");
-    if (!isValidPin(pin)) return toast.error("PIN must be 4 to 6 digits.");
-    if (pin !== confirm) return toast.error("PINs do not match.");
+    if (!name.trim()) { toast.error("Enter the owner's name."); return; }
+    if (!isValidPin(pin)) { toast.error("PIN must be 4 to 6 digits."); return; }
+    if (pin !== confirm) { toast.error("PINs do not match."); return; }
     const id = `st-${Math.random().toString(36).slice(2, 10)}`;
     addStaff({ id, name: name.trim(), role: "owner", pinHash: await hashPin(id, pin) });
     signInStaff(id);

@@ -12,10 +12,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
-import { hydrateStore, useStore } from "@/store/useStore";
+import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   return (
@@ -130,36 +128,22 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-function StoreTitle() {
-  const storeName = useStore((s) => s.settings.storeName);
-  return (
-    <span className="truncate text-sm font-bold tracking-tight text-foreground">{storeName}</span>
-  );
-}
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
 
   useEffect(() => {
-    hydrateStore();
-  }, []);
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      void router.invalidate();
+      if (event !== "SIGNED_OUT") void queryClient.invalidateQueries();
+    });
+    return () => data.subscription.unsubscribe();
+  }, [router, queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SidebarProvider
-        style={{ "--sidebar-width": "15rem", "--sidebar-width-icon": "3rem" } as React.CSSProperties}
-      >
-        <AppSidebar />
-        <SidebarInset className="flex h-svh flex-col overflow-hidden">
-          <header className="flex h-11 shrink-0 items-center gap-3 border-b bg-background px-3">
-            <SidebarTrigger />
-            <StoreTitle />
-          </header>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            <Outlet />
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+      <Outlet />
       <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
