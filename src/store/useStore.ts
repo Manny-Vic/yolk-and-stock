@@ -23,6 +23,8 @@ import type {
   Supplier,
 } from "@/lib/types";
 import { shiftSummary } from "@/lib/shift";
+import { landedCostPerCase, weightedAverageCost } from "@/lib/costing";
+import { purchasePayable, purchaseTotal, returnableCases } from "@/lib/derive";
 import {
   SEED_ACCOUNTS,
   SEED_AUDIT,
@@ -170,7 +172,9 @@ export interface StoreState {
   addSupplier: (s: Omit<Supplier, "id">) => void;
 
   // Purchasing
-  addPurchase: (input: { supplierId: string; items: { productId: string; qty: number; cost: number }[]; deliveryCost: number; expectedDate?: string | undefined }) => void;
+  addPurchase: (input: { supplierId: string; items: { productId: string; qty: number; cost: number }[]; deliveryCost: number; expectedDate?: string | undefined; termsDays?: number | undefined }) => void;
+  /** Send cases back to the supplier; lowers stock and what we owe (refund into accountId if already overpaid) */
+  returnPurchase: (purchaseId: string, productId: string, qty: number, reason: string, refundAccountId: string) => string | null;
   receivePurchase: (purchaseId: string, accepted: Record<string, number>, date: string) => void;
   payPurchase: (purchaseId: string, amount: number, accountId: string) => void;
 
@@ -496,6 +500,7 @@ export const useStore = create<StoreState>()(
             reference: p.reference || undefined,
             verified: p.verified ?? p.method === "cash",
             paidAt: today,
+            recordedBy: staffName(st),
             dueDate: p.method === "credit" ? p.dueDate ?? addDaysISO(today, customer?.dueDays ?? 14) : undefined,
           })),
           status: "confirmed",
@@ -524,6 +529,7 @@ export const useStore = create<StoreState>()(
               description: `${METHOD_LABEL[p.method]} payment for ${id}`,
               ref: p.reference,
               shiftId: openShiftId(state),
+              by: staffName(state),
             });
           }
           const log = credit
@@ -589,6 +595,7 @@ export const useStore = create<StoreState>()(
           reference: input.reference || undefined,
           verified: input.verified ?? input.method === "cash",
           paidAt: today,
+          recordedBy: staffName(get()),
         };
         set((state) => ({
           orders: state.orders.map((o) => (o.id === orderId ? { ...o, payments: [...o.payments, payment] } : o)),
@@ -604,6 +611,7 @@ export const useStore = create<StoreState>()(
               description: `${METHOD_LABEL[input.method]} payment for ${orderId}`,
               ref: payment.reference,
               shiftId: openShiftId(state),
+              by: staffName(state),
             },
           ],
           auditLog: audit(state, "Payment recorded", `${orderId} — ${fmtPeso(input.amount)} via ${METHOD_LABEL[input.method]}`),
@@ -670,6 +678,8 @@ export const useStore = create<StoreState>()(
             deliveryCost: input.deliveryCost,
             status: "ordered",
             paidAmount: 0,
+            termsDays: input.termsDays && input.termsDays > 0 ? input.termsDays : undefined,
+            createdBy: staffName(state),
           };
           return {
             purchases: [po, ...state.purchases],
@@ -685,35 +695,71 @@ export const useStore = create<StoreState>()(
           if (!po || po.status !== "ordered") return {};
           const items = po.items.map((it) => ({ ...it, accepted: accepted[it.productId] ?? 0 }));
           const totalAccepted = items.reduce((s, it) => s + it.accepted, 0);
-          const itemsCost = items.reduce((s, it) => s + it.accepted * it.cost, 0);
-          const landed = totalAccepted > 0 ? Math.round((itemsCost + po.deliveryCost) / totalAccepted) : 0;
+          const costNotes: string[] = [];
           const products = state.products.map((p) => {
             const it = items.find((x) => x.productId === p.id);
             if (!it || it.accepted <= 0) return p;
-            return { ...p, cases: p.cases + it.accepted, cost: landed };
+            const landed = landedCostPerCase(it.cost, po.deliveryCost, totalAccepted);
+            const cost = weightedAverageCost(p.cases, p.cost, it.accepted, landed);
+            costNotes.push(`${p.name} ${fmtPeso(p.cost)} → ${fmtPeso(cost)}`);
+            return { ...p, cases: p.cases + it.accepted, cost };
           });
+          const dueDate = po.termsDays ? addDaysISO(date, po.termsDays) : undefined;
           return {
-            purchases: state.purchases.map((x) => (x.id === purchaseId ? { ...po, items, status: "received", receivedDate: date } : x)),
+            purchases: state.purchases.map((x) =>
+              x.id === purchaseId ? { ...po, items, status: "received", receivedDate: date, dueDate, receivedBy: staffName(state) } : x,
+            ),
             products,
-            auditLog: audit(state, "Goods received", `${po.id} — ${totalAccepted} case(s) received. Landed cost ${fmtPeso(landed)}/case`),
+            auditLog: audit(state, "Goods received", `${po.id} — ${totalAccepted} case(s). Average cost: ${costNotes.join("; ")}`),
           };
         });
+      },
+
+      returnPurchase: (purchaseId, productId, qty, reason, refundAccountId) => {
+        const st = get();
+        const po = st.purchases.find((p) => p.id === purchaseId);
+        if (!po || po.status === "ordered") return "Only received purchases can be returned.";
+        const it = po.items.find((x) => x.productId === productId);
+        const product = st.products.find((p) => p.id === productId);
+        if (!it || !product) return "Product not on this purchase.";
+        if (!Number.isInteger(qty) || qty <= 0) return "Enter whole cases to return.";
+        if (qty > returnableCases(po, productId)) return `Only ${returnableCases(po, productId)} case(s) can be returned.`;
+        if (qty > product.cases - product.reserved) return `Only ${product.cases - product.reserved} unreserved case(s) in stock.`;
+        if (!reason.trim()) return "Enter a reason for the return.";
+        const ret = { id: uid(), date: todayISO(), productId, qty, cost: it.cost, reason: reason.trim(), by: staffName(st) };
+        const updated: PurchaseOrder = { ...po, returns: [...(po.returns ?? []), ret] };
+        const owed = purchaseTotal(updated);
+        const refund = Math.max(0, updated.paidAmount - owed);
+        if (refund > 0) updated.paidAmount = owed;
+        if (updated.paidAmount >= owed) updated.status = "paid";
+        set((state) => ({
+          purchases: state.purchases.map((x) => (x.id === purchaseId ? updated : x)),
+          products: state.products.map((p) => (p.id === productId ? { ...p, cases: Math.max(0, p.cases - qty) } : p)),
+          cashEntries:
+            refund > 0
+              ? [...state.cashEntries, { id: uid(), date: todayISO(), accountId: refundAccountId, direction: "in" as const, amount: refund, kind: "supplier_payment" as const, description: `Supplier refund for return on ${po.id}`, shiftId: openShiftId(state), by: staffName(state) }]
+              : state.cashEntries,
+          auditLog: audit(state, "Purchase return", `${po.id} — ${qty} case(s) ${product.name} returned (${reason.trim()}), credit ${fmtPeso(qty * it.cost)}${refund > 0 ? `, refund ${fmtPeso(refund)}` : ""}`),
+        }));
+        return null;
       },
 
       payPurchase: (purchaseId, amount, accountId) => {
         set((state) => {
           const po = state.purchases.find((p) => p.id === purchaseId);
           if (!po) return {};
-          const payable = Math.max(0, po.items.reduce((s, it) => s + (it.accepted || it.qty) * it.cost, 0) + po.deliveryCost - po.paidAmount);
+          const payable = purchasePayable(po);
           if (amount <= 0 || amount > payable) return {};
           const paidAmount = po.paidAmount + amount;
           return {
             purchases: state.purchases.map((x) =>
-              x.id === purchaseId ? { ...x, paidAmount, status: paidAmount >= payable ? "paid" : x.status } : x,
+              x.id === purchaseId
+                ? { ...x, paidAmount, status: amount >= payable ? "paid" : x.status, payments: [...(x.payments ?? []), { id: uid(), date: todayISO(), amount, accountId, by: staffName(state) }] }
+                : x,
             ),
             cashEntries: [
               ...state.cashEntries,
-              { id: uid(), date: todayISO(), accountId, direction: "out", amount, kind: "supplier_payment", description: `Payment for ${po.id}`, shiftId: openShiftId(state) },
+              { id: uid(), date: todayISO(), accountId, direction: "out", amount, kind: "supplier_payment", description: `Payment for ${po.id}`, shiftId: openShiftId(state), by: staffName(state) },
             ],
             auditLog: audit(state, "Supplier payment", `${po.id} — ${fmtPeso(amount)}`),
           };
@@ -723,10 +769,10 @@ export const useStore = create<StoreState>()(
       // ---------- Money ----------
       addExpense: (e) => {
         set((state) => ({
-          expenses: [{ ...e, id: uid() }, ...state.expenses],
+          expenses: [{ ...e, id: uid(), by: staffName(state) }, ...state.expenses],
           cashEntries: [
             ...state.cashEntries,
-            { id: uid(), date: e.date, accountId: METHOD_ACCOUNT[e.method], direction: "out", amount: e.amount, kind: "expense", description: `${e.category} — ${e.payee}`, shiftId: openShiftId(state) },
+            { id: uid(), date: e.date, accountId: METHOD_ACCOUNT[e.method], direction: "out", amount: e.amount, kind: "expense", description: `${e.category} — ${e.payee}`, shiftId: openShiftId(state), by: staffName(state) },
           ],
           auditLog: audit(state, "Expense recorded", `${e.category} — ${fmtPeso(e.amount)} via ${METHOD_LABEL[e.method]}`),
         }));
@@ -734,7 +780,7 @@ export const useStore = create<StoreState>()(
 
       addCashEntry: (e) => {
         set((state) => ({
-          cashEntries: [{ ...e, id: uid(), shiftId: e.shiftId ?? openShiftId(state) }, ...state.cashEntries],
+          cashEntries: [{ ...e, id: uid(), shiftId: e.shiftId ?? openShiftId(state), by: e.by ?? staffName(state) }, ...state.cashEntries],
           auditLog: audit(state, "Cash entry", `${e.kind.replace("_", " ")} — ${fmtPeso(e.amount)}`),
         }));
       },
