@@ -12,7 +12,25 @@ import type {
 /** Purchase total = Σ (accepted ?? qty) × cost + delivery cost − paid so far. */
 export function purchaseTotal(po: PurchaseOrder): number {
   const items = po.items.reduce((s, it) => s + (po.status === "ordered" ? it.qty : it.accepted || it.qty) * it.cost, 0);
-  return items + po.deliveryCost;
+  return Math.max(0, items + po.deliveryCost - purchaseReturnsValue(po));
+}
+
+/** Value credited back by the supplier for returned cases. */
+export function purchaseReturnsValue(po: PurchaseOrder): number {
+  return (po.returns ?? []).reduce((s, r) => s + r.qty * r.cost, 0);
+}
+
+/** Cases still returnable for a product on a received purchase. */
+export function returnableCases(po: PurchaseOrder, productId: string): number {
+  const it = po.items.find((x) => x.productId === productId);
+  if (!it) return 0;
+  const returned = (po.returns ?? []).filter((r) => r.productId === productId).reduce((s, r) => s + r.qty, 0);
+  return Math.max(0, it.accepted - returned);
+}
+
+/** True when an unpaid purchase is past its supplier due date. */
+export function isPurchaseOverdue(po: PurchaseOrder, today: string): boolean {
+  return !!po.dueDate && po.status !== "paid" && purchasePayable(po) > 0 && po.dueDate < today;
 }
 
 export function purchasePayable(po: PurchaseOrder): number {

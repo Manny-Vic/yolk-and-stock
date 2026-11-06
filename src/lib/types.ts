@@ -46,6 +46,8 @@ export interface Payment {
   paidAt: string;
   /** Only for credit sales */
   dueDate?: string | undefined;
+  /** Staff member who recorded this payment */
+  recordedBy?: string | undefined;
 }
 
 export interface Order {
@@ -127,6 +129,33 @@ export interface PurchaseOrder {
   status: "ordered" | "received" | "paid";
   receivedDate?: string;
   paidAmount: number;
+  /** Supplier credit terms in days, counted from the received date */
+  termsDays?: number | undefined;
+  /** Date the supplier must be paid by */
+  dueDate?: string | undefined;
+  createdBy?: string | undefined;
+  receivedBy?: string | undefined;
+  returns?: PurchaseReturn[] | undefined;
+  payments?: SupplierPayment[] | undefined;
+}
+
+export interface PurchaseReturn {
+  id: string;
+  date: string;
+  productId: string;
+  qty: number;
+  /** Cost per case credited back, centavos */
+  cost: number;
+  reason: string;
+  by?: string | undefined;
+}
+
+export interface SupplierPayment {
+  id: string;
+  date: string;
+  amount: number;
+  accountId: string;
+  by?: string | undefined;
 }
 
 export interface Expense {
@@ -138,6 +167,8 @@ export interface Expense {
   payee: string;
   description?: string | undefined;
   receiptName?: string | undefined;
+  /** Staff member who recorded the expense */
+  by?: string | undefined;
 }
 
 export const EXPENSE_CATEGORIES = [
@@ -188,6 +219,8 @@ export interface CashEntry {
   ref?: string | undefined;
   /** Shift that was open when this entry was recorded */
   shiftId?: string | undefined;
+  /** Staff member who recorded this entry */
+  by?: string | undefined;
 }
 
 export interface AuditEntry {
@@ -238,4 +271,8 @@ export interface Settings {
   creditApprovalLimit: number;
   /** Cashiers need an owner PIN for any line discount above this percent */
   maxCashierDiscountPct?: number | undefined;
+  /** Receipt paper: full page, or 80mm / 58mm thermal roll */
+  receiptPaper?: ReceiptPaper | undefined;
 }
+
+export type ReceiptPaper = "standard" | "80mm" | "58mm";
