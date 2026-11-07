@@ -149,7 +149,7 @@ function OrderDetailPage() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => printHtml(`Receipt ${order.id}`, receiptHtml(order, settings))}>
+          <Button variant="outline" size="sm" onClick={() => printHtml(`Receipt ${order.id}`, receiptHtml(order, settings), settings.receiptPaper ?? "standard")}>
             <Printer className="mr-1.5 size-3.5" /> Print
           </Button>
           {t.balance > 0 && order.status !== "cancelled" ? (

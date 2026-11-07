@@ -36,7 +36,8 @@ export function receiptHtml(order: Order, settings: Settings): string {
   <h1>${settings.storeName}</h1>
   <div class="muted">${settings.address} · ${settings.phone}</div>
   <div class="section"><b>Order</b>${order.id} · ${fmtDate(order.date)} · ${FULFILLMENT_LABELS[order.status]}</div>
-  <div class="section"><b>Customer</b>${order.customerName}${order.customerId ? "" : " (walk-in)"} · Source: ${order.source}${order.sourceDetail ? ` (${order.sourceDetail})` : ""}${order.staffName ? ` · Cashier: ${order.staffName}` : ""}</div>
+  <div class="section"><b>Customer</b>${order.customerName}${order.customerId ? "" : " (walk-in)"} · Source: ${order.source}${order.sourceDetail ? ` (${order.sourceDetail})` : ""}</div>
+  ${order.staffName ? `<div class="section"><b>Cashier</b>${order.staffName}</div>` : ""}
   <table><thead><tr><th>Product</th><th class="num">Amount</th></tr></thead><tbody>
     ${lineRows}
     ${order.orderDiscount > 0 ? `<tr><td>Order discount (${order.orderDiscountType === "percent" ? `${order.orderDiscount}%` : ""})</td><td class="num">−${fmtPeso(t.orderDiscount)}</td></tr>` : ""}
@@ -46,6 +47,7 @@ export function receiptHtml(order: Order, settings: Settings): string {
   ${payRows ? `<table><thead><tr><th>Payments</th><th class="num">Amount</th></tr></thead><tbody>${payRows}<tr class="total"><td>Balance</td><td class="num">${fmtPeso(t.balance)}</td></tr></tbody></table>` : ""}
   ${order.notes ? `<div class="section"><b>Notes</b>${order.notes}</div>` : ""}
   ${order.staffNotes ? `<div class="section"><b>Staff notes</b>${order.staffNotes}</div>` : ""}
+  <div class="section muted" style="text-align:center">Thank you!</div>
   <div class="section muted">Fulfillment: ${order.fulfillment === "delivery" ? "Delivery" : "Store pickup"}${order.requestedDate ? ` · Requested ${fmtDate(order.requestedDate)}` : ""}</div>`;
 }
 
@@ -141,7 +143,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: { order: Order | nu
           </div>
 
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button variant="outline" size="sm" onClick={() => printHtml(`Receipt ${order.id}`, receiptHtml(order, settings))}>
+            <Button variant="outline" size="sm" onClick={() => printHtml(`Receipt ${order.id}`, receiptHtml(order, settings), settings.receiptPaper ?? "standard")}>
               <Printer className="mr-1.5 size-4" /> Print receipt
             </Button>
             <Button
