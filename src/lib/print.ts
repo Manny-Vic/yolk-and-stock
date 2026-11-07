@@ -1,5 +1,13 @@
 /** Open a small print window with the given receipt/statement HTML. */
-export function printHtml(title: string, bodyHtml: string) {
+import type { ReceiptPaper } from "./types";
+
+const PAPER_CSS: Record<ReceiptPaper, string> = {
+  standard: "",
+  "80mm": `@page { size: 80mm auto; margin: 0; } body { width: 80mm; padding: 4mm; font-family: ui-monospace, Menlo, Consolas, monospace; } h1 { font-size: 14px; text-align: center; } td, .section { font-size: 11px; } .total td { font-size: 13px; }`,
+  "58mm": `@page { size: 58mm auto; margin: 0; } body { width: 58mm; padding: 2mm; font-family: ui-monospace, Menlo, Consolas, monospace; } h1 { font-size: 12px; text-align: center; } td, .section, th { font-size: 9px; } .muted { font-size: 8px; } .total td { font-size: 11px; }`,
+};
+
+export function printHtml(title: string, bodyHtml: string, paper: ReceiptPaper = "standard") {
   if (typeof window === "undefined") return;
   const win = window.open("", "_blank", "width=440,height=720");
   if (!win) return;
@@ -16,6 +24,7 @@ export function printHtml(title: string, bodyHtml: string) {
   .total td { font-weight: 800; font-size: 14px; border-bottom: none; padding-top: 8px; }
   .section { margin-top: 14px; font-size: 12px; }
   .section b { display: block; font-size: 10px; text-transform: uppercase; color: #6b7f75; margin-bottom: 3px; }
+${PAPER_CSS[paper]}
 </style></head><body>${bodyHtml}</body></html>`);
   win.document.close();
   win.focus();
