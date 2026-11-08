@@ -3,7 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownRight, ArrowUpRight, Banknote, Landmark, Smartphone, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { EditableNumber } from "@/components/shared/editable-number";
+import { EditableText } from "@/components/shared/editable-text";
 import { ToneBadge } from "@/components/shared/status-badge";
+import { requestOwnerApproval } from "@/components/staff/owner-approval";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -69,6 +72,7 @@ function CashFlowPage() {
   const accounts = useStore((s) => s.accounts);
   const entries = useStore((s) => s.cashEntries);
   const addCashEntry = useStore((s) => s.addCashEntry);
+  const updateAccount = useStore((s) => s.updateAccount);
 
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<CashEntryKind>("capital");
@@ -115,7 +119,7 @@ function CashFlowPage() {
         <div>
           <h1 className="text-lg font-bold tracking-tight">Cash Flow</h1>
           <p className="text-xs text-muted-foreground">
-            Opening balances, receipts, payments, transfers, and closing reconciliation · total position {fmtPeso(totalCash)}
+            Opening balances, receipts, payments, transfers, and closing reconciliation · total position {fmtPeso(totalCash)} · click an account name or its opening amount to edit
           </p>
         </div>
         <Button size="sm" onClick={() => setOpen(true)}>
@@ -134,13 +138,51 @@ function CashFlowPage() {
                 <span className="flex size-7 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                   <Icon className="size-4" />
                 </span>
-                <span className="text-[13px] font-bold">{a.name}</span>
+                <span className="min-w-0 flex-1 text-[13px] font-bold">
+                  <EditableText
+                    value={a.name}
+                    ariaLabel={`Name of ${a.name}`}
+                    onCommit={(text) => {
+                      if (text === a.name) return null;
+                      if (accounts.some((x) => x.id !== a.id && x.name.toLowerCase() === text.toLowerCase())) {
+                        return "Another account already has that name";
+                      }
+                      void requestOwnerApproval("Rename account", [`"${a.name}" → "${text}"`]).then((ok) => {
+                        if (!ok) return;
+                        updateAccount(a.id, { name: text });
+                        toast.success("Account renamed");
+                      });
+                      return null;
+                    }}
+                  />
+                </span>
               </div>
               <div className="mt-2 text-xl font-extrabold tabular-nums">{fmtPeso(b.closing)}</div>
               <div className="mt-1 grid grid-cols-3 gap-1 text-[11px]">
                 <span className="text-muted-foreground">Open</span>
-                <span className="text-right tabular-nums text-muted-foreground">{fmtPeso(b.opening)}</span>
-                <span />
+                <span className="col-span-2 text-right text-muted-foreground">
+                  <EditableNumber
+                    value={b.opening}
+                    display={fmtPeso(b.opening)}
+                    draft={(b.opening / 100).toFixed(2)}
+                    parse={parsePeso}
+                    ariaLabel={`Opening balance for ${a.name}`}
+                    className="text-[11px] text-muted-foreground"
+                    inputClassName="text-[11px]"
+                    onCommit={(v) => {
+                      if (v < 0) return "Cannot be negative";
+                      if (v === b.opening) return null;
+                      void requestOwnerApproval("Change opening balance", [
+                        `${a.name}: ${fmtPeso(b.opening)} → ${fmtPeso(v)}`,
+                      ]).then((ok) => {
+                        if (!ok) return;
+                        updateAccount(a.id, { opening: v });
+                        toast.success(`${a.name} opening balance updated`);
+                      });
+                      return null;
+                    }}
+                  />
+                </span>
                 <span className="inline-flex items-center text-primary"><ArrowUpRight className="size-3" /> In</span>
                 <span className="text-right tabular-nums">{fmtPeso(b.in)}</span>
                 <span />

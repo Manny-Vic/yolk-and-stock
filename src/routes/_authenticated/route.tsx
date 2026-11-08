@@ -7,7 +7,7 @@ import { StaffGate } from "@/components/staff/staff-gate";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
-import { useCloudSync, useSyncStatus } from "@/lib/cloud-sync";
+import { resolveDataOwnerId, useCloudSync, useSyncStatus } from "@/lib/cloud-sync";
 import { openShiftId, useStore } from "@/store/useStore";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -15,7 +15,8 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/auth" });
-    return { userId: data.user.id };
+    // Id of the business whose data to load: your own, or the owner's if this login was added as a member.
+    return { userId: (await resolveDataOwnerId()) ?? data.user.id };
   },
   component: AuthenticatedLayout,
 });

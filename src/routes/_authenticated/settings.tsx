@@ -59,6 +59,7 @@ function SettingsPage() {
   const settings = useStore((s) => s.settings);
   const updateSettings = useStore((s) => s.updateSettings);
   const resetDemo = useStore((s) => s.resetDemo);
+  const startFresh = useStore((s) => s.startFresh);
   const auditLog = useStore((s) => s.auditLog);
 
   const [name, setName] = useState(settings.storeName);
@@ -152,6 +153,23 @@ function SettingsPage() {
       <ClearDataSection />
 
       <section className="rounded-xl border border-destructive/30 bg-card p-4 shadow-card">
+        <h2 className="mb-1 text-sm font-bold text-destructive">Start fresh</h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Removes all the sample data: products, suppliers, customers, orders, purchases, expenses, cash flow and shifts, and sets every account balance to zero. Store settings, staff and PINs are kept. Afterwards, add your suppliers, then your products, then enter your real opening balances on the Cash Flow page.
+        </p>
+        <ClearButton
+          label="Start fresh"
+          destructive
+          title="Remove all sample data and start fresh?"
+          description="All products, suppliers, customers, orders, purchases, expenses, cash flow records and shifts are deleted, and every account balance is set to zero. Store settings, staff and PINs are kept. A cloud backup is the only way back."
+          onConfirm={() => {
+            startFresh();
+            toast.success("Fresh start — add your suppliers and products next");
+          }}
+        />
+      </section>
+
+      <section className="rounded-xl border border-destructive/30 bg-card p-4 shadow-card">
         <h2 className="mb-1 text-sm font-bold text-destructive">Demo data</h2>
         <p className="mb-3 text-xs text-muted-foreground">
           Resetting replaces your records with the original sample data. Your staff PINs are kept, and you can undo it from Cloud backups.
@@ -205,6 +223,7 @@ const CLEAR_ITEMS = [
   { key: "purchases", label: "Purchases", title: "Delete all purchase orders?", description: "Every purchase order record is removed. Product stock levels and supplier payments in cash flow are not changed." },
   { key: "customers", label: "Customers", title: "Delete all customer accounts?", description: "Every customer and their credit terms are removed. The current order switches back to Walk-in Customer." },
   { key: "expenses", label: "Expenses", title: "Delete all expenses?", description: "Every expense record is removed, along with the cash flow entries they created." },
+  { key: "balances", label: "Account balances", title: "Set all account balances to zero?", description: "Every account's opening balance (cash drawer, GCash, Maya, bank) is set to zero so you can enter your real starting amounts on the Cash Flow page. Cash flow entries are not changed." },
   { key: "cashflow", label: "Cash flow", title: "Delete all cash flow records?", description: "Every cash entry is removed and each account returns to its opening balance. Orders, expenses, and purchases are not changed." },
 ] as const;
 
@@ -214,6 +233,7 @@ function ClearDataSection() {
   const clearCustomers = useStore((s) => s.clearCustomers);
   const clearExpenses = useStore((s) => s.clearExpenses);
   const clearCashFlow = useStore((s) => s.clearCashFlow);
+  const zeroAccountBalances = useStore((s) => s.zeroAccountBalances);
   const clearAllData = useStore((s) => s.clearAllData);
   const orders = useStore((s) => s.orders.length);
   const purchases = useStore((s) => s.purchases.length);
@@ -226,6 +246,7 @@ function ClearDataSection() {
     customers,
     expenses,
     cashflow: cashEntries,
+    balances: null,
   };
   const actions: Record<(typeof CLEAR_ITEMS)[number]["key"], () => void> = {
     orders: clearOrders,
@@ -233,6 +254,7 @@ function ClearDataSection() {
     customers: clearCustomers,
     expenses: clearExpenses,
     cashflow: clearCashFlow,
+    balances: zeroAccountBalances,
   };
   const total = orders + purchases + customers + expenses + cashEntries;
 
@@ -252,7 +274,7 @@ function ClearDataSection() {
             description={item.description}
             onConfirm={() => {
               actions[item.key]();
-              toast.success(`All ${item.label.toLowerCase()} deleted`);
+              toast.success(`${item.label} cleared`);
             }}
           />
         ))}

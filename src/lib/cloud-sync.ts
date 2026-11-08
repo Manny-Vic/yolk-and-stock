@@ -28,6 +28,23 @@ function clientId(): string {
   return id;
 }
 
+/**
+ * Whose business data this login works on. Normally the signed-in user's own id; a login linked
+ * in `pos_members` works on the owner's data instead, so several logins can share one business.
+ */
+export async function resolveDataOwnerId(): Promise<string | null> {
+  const { data } = await supabase.auth.getUser();
+  const user = data.user;
+  if (!user) return null;
+  const { data: membership, error } = await supabase
+    .from("pos_members")
+    .select("owner_id")
+    .eq("member_id", user.id)
+    .maybeSingle();
+  if (error) console.error("Membership lookup failed", error);
+  return membership?.owner_id ?? user.id;
+}
+
 /** Save the current business data now (also used by the debounced saver). */
 export async function saveNow(ownerId: string): Promise<boolean> {
   useSyncStatus.setState({ status: "saving" });

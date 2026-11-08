@@ -35,6 +35,24 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_members: {
+        Row: {
+          created_at: string
+          member_id: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          member_id: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          member_id?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
       pos_state: {
         Row: {
           client_id: string

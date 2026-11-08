@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_MAX_CASHIER_DISCOUNT_PCT } from "@/lib/approval";
-import { createBackup, listBackups, restoreBackup, saveNow } from "@/lib/cloud-sync";
+import { createBackup, listBackups, resolveDataOwnerId, restoreBackup, saveNow } from "@/lib/cloud-sync";
 import { hashPin, isValidPin } from "@/lib/pin";
 import type { StaffRole } from "@/lib/types";
 import { useStore } from "@/store/useStore";
@@ -92,7 +91,7 @@ export function BackupSection() {
   const refresh = () => void listBackups().then(setRows).catch(() => toast.error("Could not load backups."));
   useEffect(refresh, []);
 
-  const owner = async () => (await supabase.auth.getUser()).data.user?.id;
+  const owner = resolveDataOwnerId;
 
   return (
     <section className="rounded-xl border bg-card p-4 shadow-card">

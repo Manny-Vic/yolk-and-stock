@@ -183,7 +183,13 @@ export interface StoreState {
   addCashEntry: (e: Omit<CashEntry, "id">) => void;
 
   updateSettings: (patch: Partial<Settings>) => void;
+  /** Set every account's opening balance to zero. */
+  zeroAccountBalances: () => void;
+  /** Change an account's name or opening balance (centavos). */
+  updateAccount: (id: string, patch: Partial<Pick<Account, "name" | "opening">>) => void;
   resetDemo: () => void;
+  /** Wipe all sample/business records for a clean start. Keeps store settings and staff PINs. */
+  startFresh: () => void;
 }
 
 /** Keys of the store that are business data shared across devices. */
@@ -786,6 +792,55 @@ export const useStore = create<StoreState>()(
       },
 
       updateSettings: (patch) => set((state) => ({ settings: { ...state.settings, ...patch } })),
+
+      zeroAccountBalances: () =>
+        set((state) => ({
+          accounts: state.accounts.map((a) => ({ ...a, opening: 0 })),
+          auditLog: audit(state, "Account balances reset", "All opening balances set to zero"),
+        })),
+
+      updateAccount: (id, patch) =>
+        set((state) => {
+          const a = state.accounts.find((x) => x.id === id);
+          if (!a) return {};
+          const next = {
+            ...a,
+            ...(patch.name !== undefined ? { name: patch.name.trim() || a.name } : {}),
+            ...(patch.opening !== undefined ? { opening: Math.max(0, Math.round(patch.opening)) } : {}),
+          };
+          const changes: string[] = [];
+          if (next.opening !== a.opening) changes.push(`opening balance ${fmtPeso(a.opening)} → ${fmtPeso(next.opening)}`);
+          if (next.name !== a.name) changes.push(`renamed "${a.name}" → "${next.name}"`);
+          if (!changes.length) return {};
+          return {
+            accounts: state.accounts.map((x) => (x.id === id ? next : x)),
+            auditLog: audit(state, "Account updated", `${a.name}: ${changes.join("; ")}`),
+          };
+        }),
+
+      startFresh: () =>
+        set((state) => ({
+          products: [],
+          suppliers: [],
+          customers: [],
+          orders: [],
+          purchases: [],
+          expenses: [],
+          cashEntries: [],
+          shifts: [],
+          accounts: state.accounts.map((a) => ({ ...a, opening: 0 })),
+          cart: emptyCart(),
+          nextSeqOrder: 1,
+          nextSeqPurchase: 1,
+          auditLog: [
+            {
+              ts: now(),
+              action: "Started fresh",
+              detail: "All sample records removed; account balances set to zero",
+              by: staffName(state),
+            },
+          ],
+        })),
 
       resetDemo: () => set((state) => ({ ...freshSeed(), shifts: [], auditLog: audit({ ...state, auditLog: [] }, "Demo data reset", "Sample data restored") })),
 

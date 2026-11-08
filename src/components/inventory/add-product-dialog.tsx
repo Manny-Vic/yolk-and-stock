@@ -45,7 +45,7 @@ export function AddProductDialog({ open, onOpenChange }: { open: boolean; onOpen
     if (products.some((x) => x.name.toLowerCase() === n.toLowerCase())) return toast.error("A product with that name already exists.");
     if (p === null || p <= 0) return toast.error("Enter a selling price greater than zero.");
     if (c === null || qty === null || th === null) return toast.error("Enter valid cost, stock, and reorder values.");
-    addProduct({ name: n, size: size.trim() || n, image: image || eggsMixed, defaultPrice: p, cost: c, cases: qty, reorderThreshold: th, supplierId });
+    addProduct({ name: n, size: size.trim() || n, image: image || eggsMixed, defaultPrice: p, cost: c, cases: qty, reorderThreshold: th, supplierId: supplierId || suppliers[0]?.id || "" });
     toast.success(`${n} added — it's now on the POS screen`);
     reset();
     onOpenChange(false);
