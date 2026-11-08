@@ -76,20 +76,20 @@ function TopBar() {
   };
 
   return (
-    <header className="flex h-11 shrink-0 items-center gap-3 border-b bg-background px-3">
+    <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-background px-3 sm:gap-3">
       <SidebarTrigger />
-      <span className="truncate text-sm font-bold tracking-tight text-foreground">{storeName}</span>
-      <div className="ml-auto flex items-center gap-2 text-[12px]">
-        <span className={shiftOpen ? "rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary" : "rounded-full bg-warning/15 px-2 py-0.5 font-semibold text-warning-foreground"}>
-          {shiftOpen ? "Shift open" : "No shift open"}
+      <span className="min-w-0 truncate text-sm font-bold tracking-tight text-foreground">{storeName}</span>
+      <div className="ml-auto flex shrink-0 items-center gap-1.5 text-[12px] sm:gap-2">
+        <span className={shiftOpen ? "whitespace-nowrap rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary" : "whitespace-nowrap rounded-full bg-warning/15 px-2 py-0.5 font-semibold text-warning-foreground"}>
+          {shiftOpen ? "Shift open" : <><span className="sm:hidden">No shift</span><span className="hidden sm:inline">No shift open</span></>}
         </span>
         <span className="flex items-center gap-1 text-muted-foreground" title="Cloud save status">
           {status === "saving" || status === "loading" ? <Loader2 className="size-3.5 animate-spin" /> : status === "synced" ? <Cloud className="size-3.5 text-primary" /> : <CloudOff className="size-3.5 text-destructive" />}
           <span className="hidden sm:inline">{status === "synced" ? "Saved" : status === "saving" ? "Saving…" : status === "offline" ? "Offline — will save when back" : status === "error" ? "Save failed" : "Loading"}</span>
         </span>
         <span className="hidden font-semibold sm:inline">{me?.name} <span className="font-normal text-muted-foreground">({me?.role})</span></span>
-        <Button variant="outline" size="sm" className="h-7" onClick={signOutStaff}><Lock className="mr-1 size-3.5" />Lock</Button>
-        <Button variant="ghost" size="icon" className="size-7" aria-label="Sign out of depot account" onClick={() => void signOut()}><LogOut className="size-3.5" /></Button>
+        <Button variant="outline" size="sm" className="h-8 px-2.5 sm:px-3" aria-label="Lock the screen" onClick={signOutStaff}><Lock className="size-3.5 sm:mr-1" /><span className="max-sm:sr-only">Lock</span></Button>
+        <Button variant="ghost" size="icon" className="size-8" aria-label="Sign out of depot account" onClick={() => void signOut()}><LogOut className="size-3.5" /></Button>
       </div>
     </header>
   );

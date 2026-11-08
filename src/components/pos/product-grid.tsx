@@ -12,7 +12,7 @@ export function ProductGrid() {
   const reserve = useStore((s) => s.settings.reserveOnConfirm);
 
   return (
-    <div className="grid grid-cols-2 gap-3 p-3 max-lg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-2">
+    <div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 lg:grid-cols-2">
       {products.map((p) => {
         const available = Math.max(0, reserve ? p.cases - p.reserved : p.cases);
         const inCart = cartLines.filter((l) => l.productId === p.id).reduce((s, l) => s + l.qty, 0);
@@ -56,12 +56,12 @@ export function ProductGrid() {
               ) : null}
             </div>
             <div className="p-3">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-sm font-bold">{p.name}</span>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+                <span className="min-w-0 break-words text-sm font-bold leading-tight">{p.name}</span>
                 <span className="shrink-0 text-base font-extrabold tabular-nums text-primary">{fmtPeso(p.defaultPrice)}</span>
               </div>
-              <div className="mt-0.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                <span className="truncate">{p.size}</span>
+              <div className="mt-0.5 flex flex-wrap items-center justify-between gap-x-2 text-[11px] text-muted-foreground">
+                <span className="min-w-0">{p.size}</span>
                 <span className="shrink-0 tabular-nums">
                   {available} case{available === 1 ? "" : "s"}
                   {reserve && p.reserved > 0 ? ` · ${p.reserved} res.` : ""}
@@ -74,7 +74,7 @@ export function ProductGrid() {
                     type="button"
                     disabled={out}
                     onClick={() => addToCart(p.id, q)}
-                    className="rounded-lg border bg-secondary/70 py-1 text-xs font-bold transition hover:bg-accent active:scale-95 disabled:opacity-50"
+                    className="rounded-lg border bg-secondary/70 py-2 text-xs font-bold transition hover:bg-accent active:scale-95 disabled:opacity-50 lg:py-1"
                   >
                     +{q}
                   </button>

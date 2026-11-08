@@ -43,8 +43,8 @@ function PosPage() {
   const receiptOrder = useStore((s) => (receiptId ? s.orders.find((o) => o.id === receiptId) ?? null : null));
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-background/90 px-4 py-2">
+    <div className="flex min-h-0 flex-col lg:h-full">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b bg-background/90 px-3 py-2 sm:px-4">
         <div>
           <h1 className="text-base font-bold tracking-tight">New Order</h1>
           <p className="text-[11px] text-muted-foreground">
@@ -62,17 +62,17 @@ function PosPage() {
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 max-lg:grid-rows-[auto_auto_auto] lg:grid-cols-[21rem_minmax(0,1fr)_22rem]">
-        <div className="min-h-0 overflow-y-auto border-b max-lg:max-h-[42vh] lg:border-b-0 lg:border-r">
+      <div className="grid grid-cols-1 lg:min-h-0 lg:flex-1 lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_fit-content(55%)] 2xl:grid-cols-[21rem_minmax(0,1fr)_22rem] 2xl:grid-rows-1">
+        <div className="border-b lg:row-span-2 lg:min-h-0 lg:overflow-y-auto lg:border-b-0 lg:border-r 2xl:row-span-1">
           <ProductGrid />
         </div>
-        <div className="flex min-h-0 flex-col overflow-y-auto max-lg:order-3 lg:border-r">
+        <div className="flex flex-col max-lg:order-3 max-lg:border-t lg:col-start-2 lg:row-start-1 lg:min-h-0 lg:overflow-y-auto 2xl:border-r">
           <div className="min-h-fit flex-1">
             <OrderLines />
           </div>
           <OrderDetails />
         </div>
-        <div className="min-h-0 max-lg:order-2 max-lg:max-h-[46vh] lg:border-l">
+        <div className="max-lg:order-2 lg:col-start-2 lg:row-start-2 lg:min-h-0 lg:border-t 2xl:col-start-3 2xl:row-start-1 2xl:border-l 2xl:border-t-0">
           <PaymentPanel onCompleted={setReceiptId} />
         </div>
       </div>

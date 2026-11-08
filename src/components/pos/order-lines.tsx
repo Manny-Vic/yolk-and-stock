@@ -133,7 +133,7 @@ export function OrderLines() {
                   size="icon"
                   aria-label={`Remove ${l.productName} from order`}
                   onClick={() => removeLine(l.id)}
-                  className="size-7 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+                  className="size-7 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
                 >
                   <X className="size-4" />
                 </Button>

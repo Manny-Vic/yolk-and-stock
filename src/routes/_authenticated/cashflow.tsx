@@ -158,9 +158,9 @@ function CashFlowPage() {
                 </span>
               </div>
               <div className="mt-2 text-xl font-extrabold tabular-nums">{fmtPeso(b.closing)}</div>
-              <div className="mt-1 grid grid-cols-3 gap-1 text-[11px]">
+              <div className="mt-1 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 text-[11px]">
                 <span className="text-muted-foreground">Open</span>
-                <span className="col-span-2 text-right text-muted-foreground">
+                <span className="flex justify-end text-muted-foreground">
                   <EditableNumber
                     value={b.opening}
                     display={fmtPeso(b.opening)}
@@ -184,11 +184,9 @@ function CashFlowPage() {
                   />
                 </span>
                 <span className="inline-flex items-center text-primary"><ArrowUpRight className="size-3" /> In</span>
-                <span className="text-right tabular-nums">{fmtPeso(b.in)}</span>
-                <span />
+                <span className="px-1.5 text-right tabular-nums">{fmtPeso(b.in)}</span>
                 <span className="inline-flex items-center text-destructive"><ArrowDownRight className="size-3" /> Out</span>
-                <span className="text-right tabular-nums">{fmtPeso(b.out)}</span>
-                <span />
+                <span className="px-1.5 text-right tabular-nums">{fmtPeso(b.out)}</span>
               </div>
             </div>
           );

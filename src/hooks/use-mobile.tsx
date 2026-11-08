@@ -1,6 +1,8 @@
 import * as React from "react";
 
-const MOBILE_BREAKPOINT = 768;
+// Below this width the sidebar becomes a slide-out drawer, so phones and tablets (portrait or
+// landscape) get the full screen for the work area instead of losing 240px to a fixed sidebar.
+const MOBILE_BREAKPOINT = 1280;
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);

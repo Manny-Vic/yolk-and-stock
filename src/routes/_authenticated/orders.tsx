@@ -145,7 +145,7 @@ function OrdersPage() {
                 className="cursor-pointer"
                 onClick={() => navigate({ to: "/orders/$id", params: { id: order.id } })}
               >
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <Link
                     to="/orders/$id"
                     params={{ id: order.id }}
