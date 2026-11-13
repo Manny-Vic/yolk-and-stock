@@ -10,6 +10,7 @@ import type {
   Customer,
   DiscountType,
   Expense,
+  ExpenseCorrection,
   FulfillmentStatus,
   Order,
   OrderLine,
@@ -180,6 +181,11 @@ export interface StoreState {
 
   // Money
   addExpense: (e: Omit<Expense, "id">) => void;
+  /**
+   * Correct an expense's amount without deleting the old one: the old amount stays in
+   * the expense's history, and the account gets a balancing cash entry. Returns an error message or null.
+   */
+  correctExpense: (id: string, newAmount: number, reason?: string) => string | null;
   addCashEntry: (e: Omit<CashEntry, "id">) => void;
 
   updateSettings: (patch: Partial<Settings>) => void;
@@ -782,6 +788,48 @@ export const useStore = create<StoreState>()(
           ],
           auditLog: audit(state, "Expense recorded", `${e.category} — ${fmtPeso(e.amount)} via ${METHOD_LABEL[e.method]}`),
         }));
+      },
+
+      correctExpense: (id, newAmount, reason) => {
+        const st = get();
+        const exp = st.expenses.find((x) => x.id === id);
+        if (!exp) return "Expense not found.";
+        const to = Math.round(newAmount);
+        if (!Number.isFinite(to) || to <= 0) return "Enter an amount greater than zero.";
+        if (to === exp.amount) return "That is already the current amount.";
+        const note = reason?.trim() || undefined;
+        set((state) => {
+          const delta = to - exp.amount;
+          const by = staffName(state);
+          const correction: ExpenseCorrection = { id: uid(), ts: now(), from: exp.amount, to, reason: note, by };
+          return {
+            expenses: state.expenses.map((x) =>
+              x.id === id ? { ...x, amount: to, corrections: [...(x.corrections ?? []), correction] } : x,
+            ),
+            // More spent → extra money out. Less spent → the difference comes back in.
+            cashEntries: [
+              ...state.cashEntries,
+              {
+                id: uid(),
+                date: todayISO(),
+                accountId: METHOD_ACCOUNT[exp.method],
+                direction: delta > 0 ? "out" : "in",
+                amount: Math.abs(delta),
+                kind: "expense",
+                description: `Correction: ${exp.category} — ${exp.payee} (${fmtPeso(exp.amount)} → ${fmtPeso(to)})`,
+                ref: exp.id,
+                shiftId: openShiftId(state),
+                by,
+              },
+            ],
+            auditLog: audit(
+              state,
+              "Expense corrected",
+              `${exp.category} — ${exp.payee}: ${fmtPeso(exp.amount)} → ${fmtPeso(to)}${note ? ` (${note})` : ""}`,
+            ),
+          };
+        });
+        return null;
       },
 
       addCashEntry: (e) => {

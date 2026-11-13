@@ -158,11 +158,26 @@ export interface SupplierPayment {
   by?: string | undefined;
 }
 
+/** One correction of an expense amount. Kept forever so the mistake stays visible. */
+export interface ExpenseCorrection {
+  id: string;
+  ts: string;
+  /** Amount before this correction, in centavos */
+  from: number;
+  /** Amount after this correction, in centavos */
+  to: number;
+  reason?: string | undefined;
+  by?: string | undefined;
+}
+
 export interface Expense {
   id: string;
   date: string;
   category: string;
+  /** Current (corrected) amount in centavos. This is the figure every total uses. */
   amount: number;
+  /** Earlier amounts that were corrected, oldest first. Absent when never corrected. */
+  corrections?: ExpenseCorrection[] | undefined;
   method: Exclude<PaymentMethod, "credit">;
   payee: string;
   description?: string | undefined;

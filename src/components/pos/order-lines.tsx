@@ -1,4 +1,4 @@
-import { RotateCcw, X } from "lucide-react";
+import { Minus, Plus, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { EditableNumber } from "@/components/shared/editable-number";
@@ -63,16 +63,39 @@ export function OrderLines() {
                 ) : null}
               </TableCell>
               <TableCell className="text-right">
-                <EditableNumber
-                  ariaLabel={`Quantity of ${l.productName} in cases`}
-                  value={l.qty}
-                  display={String(l.qty)}
-                  draft={String(l.qty)}
-                  parse={parseQty}
-                  onCommit={(v) => setLineQty(l.id, v)}
-                  className="font-semibold"
-                  inputClassName="w-16"
-                />
+                <div className="inline-flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label={`One less case of ${l.productName}`}
+                    disabled={l.qty <= 1}
+                    onClick={() => setLineQty(l.id, l.qty - 1)}
+                    className="size-9 touch-manipulation lg:size-8"
+                  >
+                    <Minus className="size-4" />
+                  </Button>
+                  <EditableNumber
+                    ariaLabel={`Quantity of ${l.productName} in cases`}
+                    value={l.qty}
+                    display={String(l.qty)}
+                    draft={String(l.qty)}
+                    parse={parseQty}
+                    onCommit={(v) => setLineQty(l.id, v)}
+                    className="min-w-8 text-center font-semibold"
+                    inputClassName="w-16"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label={`One more case of ${l.productName}`}
+                    onClick={() => setLineQty(l.id, l.qty + 1)}
+                    className="size-9 touch-manipulation lg:size-8"
+                  >
+                    <Plus className="size-4" />
+                  </Button>
+                </div>
               </TableCell>
               <TableCell className="text-right">
                 <span className={cn("inline-flex items-center gap-1", changed && "text-warning-foreground")}>
