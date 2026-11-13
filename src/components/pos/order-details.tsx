@@ -44,7 +44,7 @@ export function OrderDetails() {
 
   const pickCustomer = (id: string | null) => {
     const c = id ? customers.find((x) => x.id === id) : undefined;
-    updateCart({ customerId: c?.id ?? null, customerName: c?.name ?? "Walk-in Customer" });
+    updateCart({ customerId: c?.id ?? null, customerName: c?.name ?? "Walk-in Customer", customerAddress: c?.address ?? "" });
     setCustOpen(false);
   };
 
@@ -55,7 +55,7 @@ export function OrderDetails() {
           <span className="flex items-center gap-2">
             <SlidersHorizontal className="size-4" />
             Order details, discounts & delivery
-            {(cart.orderDiscount > 0 || cart.customerId || cart.notes || cart.deliveryFee > 0) && (
+            {(cart.orderDiscount > 0 || cart.customerId || cart.customerAddress || cart.customerName !== "Walk-in Customer" || cart.notes || cart.deliveryFee > 0) && (
               <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">filled</span>
             )}
           </span>
@@ -122,6 +122,28 @@ export function OrderDetails() {
                   </Command>
                 </PopoverContent>
               </Popover>
+            </div>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {!cart.customerId ? (
+                <div>
+                  <Label className="text-xs">Customer name (optional)</Label>
+                  <Input
+                    className="mt-1 h-9"
+                    placeholder="Walk-in Customer"
+                    value={cart.customerName === "Walk-in Customer" ? "" : cart.customerName}
+                    onChange={(e) => updateCart({ customerName: e.target.value || "Walk-in Customer" })}
+                  />
+                </div>
+              ) : null}
+              <div className={cart.customerId ? "sm:col-span-2" : ""}>
+                <Label className="text-xs">Address (optional)</Label>
+                <Input
+                  className="mt-1 h-9"
+                  placeholder="Street, barangay, city"
+                  value={cart.customerAddress}
+                  onChange={(e) => updateCart({ customerAddress: e.target.value })}
+                />
+              </div>
             </div>
           </div>
 

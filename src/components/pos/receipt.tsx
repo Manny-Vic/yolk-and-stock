@@ -12,10 +12,12 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { FULFILLMENT_LABELS, calcOrder, perCaseDiscountCents } from "@/lib/calc";
-import { fmtDate, fmtPeso } from "@/lib/money";
+import { fmtDate, fmtPeso, fmtTime } from "@/lib/money";
 import { printHtml } from "@/lib/print";
 import type { Order, Settings } from "@/lib/types";
 import { METHOD_LABEL, useStore } from "@/store/useStore";
+
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export function receiptHtml(order: Order, settings: Settings): string {
   const t = calcOrder(order);
@@ -35,8 +37,8 @@ export function receiptHtml(order: Order, settings: Settings): string {
   return `
   <h1>${settings.storeName}</h1>
   <div class="muted">${settings.address} · ${settings.phone}</div>
-  <div class="section"><b>Order</b>${order.id} · ${fmtDate(order.date)} · ${FULFILLMENT_LABELS[order.status]}</div>
-  <div class="section"><b>Customer</b>${order.customerName}${order.customerId ? "" : " (walk-in)"} · Source: ${order.source}${order.sourceDetail ? ` (${order.sourceDetail})` : ""}</div>
+  <div class="section"><b>Order</b>${order.id} · ${fmtDate(order.date)}${fmtTime(order.createdAt) ? ` · ${fmtTime(order.createdAt)}` : ""} · ${FULFILLMENT_LABELS[order.status]}</div>
+  <div class="section"><b>Customer</b>${esc(order.customerName)}${order.customerId ? "" : " (walk-in)"}${order.customerAddress ? `<br><span class="muted">${esc(order.customerAddress)}</span>` : ""}<br><span class="muted">Source: ${order.source}${order.sourceDetail ? ` (${esc(order.sourceDetail)})` : ""}</span></div>
   ${order.staffName ? `<div class="section"><b>Cashier</b>${order.staffName}</div>` : ""}
   <table><thead><tr><th>Product</th><th class="num">Amount</th></tr></thead><tbody>
     ${lineRows}
@@ -64,7 +66,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: { order: Order | nu
             Order {order.id} confirmed
           </DialogTitle>
           <DialogDescription>
-            {order.customerName} · {fmtDate(order.date)} · <StatusBadge status={order.status} />
+            {order.customerName} · {fmtDate(order.date)}{fmtTime(order.createdAt) ? ` · ${fmtTime(order.createdAt)}` : ""} · <StatusBadge status={order.status} />
           </DialogDescription>
         </DialogHeader>
 
@@ -136,6 +138,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: { order: Order | nu
 
           <div className="grid gap-1 text-[12px] text-muted-foreground">
             <div>Source: <span className="font-semibold text-foreground">{order.source}{order.sourceDetail ? ` — ${order.sourceDetail}` : ""}</span></div>
+            {order.customerAddress ? <div>Address: <span className="font-semibold text-foreground">{order.customerAddress}</span></div> : null}
             {order.staffName ? <div>Cashier: <span className="font-semibold text-foreground">{order.staffName}</span></div> : null}
             <div>Fulfillment: <span className="font-semibold text-foreground">{order.fulfillment === "delivery" ? "Delivery" : "Store pickup"}{order.requestedDate ? ` · ${fmtDate(order.requestedDate)}` : ""}</span></div>
             {order.notes ? <div>Notes: {order.notes}</div> : null}

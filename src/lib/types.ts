@@ -56,6 +56,8 @@ export interface Order {
   date: string;
   customerId: string | null;
   customerName: string;
+  /** Delivery / billing address typed at checkout (optional) */
+  customerAddress?: string | undefined;
   source: string;
   sourceDetail?: string | undefined;
   notes?: string | undefined;
@@ -97,6 +99,7 @@ export interface Customer {
   id: string;
   name: string;
   phone?: string | undefined;
+  address?: string | undefined;
   /** Credit limit, centavos */
   creditLimit: number;
   /** Payment terms in days */

@@ -64,6 +64,7 @@ export interface Cart {
   lines: OrderLine[];
   customerId: string | null;
   customerName: string;
+  customerAddress: string;
   source: string;
   sourceDetail: string;
   notes: string;
@@ -79,6 +80,7 @@ export const emptyCart = (): Cart => ({
   lines: [],
   customerId: null,
   customerName: "Walk-in Customer",
+  customerAddress: "",
   source: "Walk-in",
   sourceDetail: "",
   notes: "",
@@ -447,6 +449,7 @@ export const useStore = create<StoreState>()(
             lines: order.lines.map((l) => ({ ...l, id: uid() })),
             customerId: order.customerId,
             customerName: order.customerName,
+            customerAddress: order.customerAddress ?? "",
             source: order.source,
             sourceDetail: order.sourceDetail ?? "",
             notes: order.notes ?? "",
@@ -494,7 +497,8 @@ export const useStore = create<StoreState>()(
           createdAt: now(),
           date: today,
           customerId: cart.customerId,
-          customerName: cart.customerName || "Walk-in Customer",
+          customerName: cart.customerName.trim() || "Walk-in Customer",
+          customerAddress: cart.customerAddress.trim() || undefined,
           source: cart.source,
           sourceDetail: cart.sourceDetail || undefined,
           notes: cart.notes || undefined,

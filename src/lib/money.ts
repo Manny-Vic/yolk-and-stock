@@ -58,6 +58,14 @@ export function fmtDate(iso: string): string {
   return d.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
 }
 
+/** Clock time of an ISO timestamp in Philippine time, e.g. "2:35 PM". Empty if unknown. */
+export function fmtTime(iso: string | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Manila" });
+}
+
 export function addDaysISO(iso: string, days: number): string {
   const d = new Date(`${iso}T00:00:00`);
   d.setDate(d.getDate() + days);

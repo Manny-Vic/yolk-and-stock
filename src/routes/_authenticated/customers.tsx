@@ -51,6 +51,7 @@ function CustomersPage() {
   const [viewFor, setViewFor] = useState<Customer | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
   const [limit, setLimit] = useState("");
   const [dueDays, setDueDays] = useState("14");
 
@@ -64,11 +65,12 @@ function CustomersPage() {
       toast.error("Fill in name, credit limit, and due days.");
       return;
     }
-    addCustomer({ name: name.trim(), phone: phone || undefined, creditLimit: lim, dueDays: days });
+    addCustomer({ name: name.trim(), phone: phone || undefined, address: address.trim() || undefined, creditLimit: lim, dueDays: days });
     toast.success(`${name.trim()} added`);
     setAddOpen(false);
     setName("");
     setPhone("");
+    setAddress("");
     setLimit("");
   };
 
@@ -80,7 +82,7 @@ function CustomersPage() {
       toast.error("Enter a valid credit limit and terms.");
       return;
     }
-    updateCustomer(editFor.id, { creditLimit: lim, dueDays: days, phone: phone || undefined });
+    updateCustomer(editFor.id, { creditLimit: lim, dueDays: days, phone: phone || undefined, address: address.trim() || undefined });
     toast.success(`${editFor.name} updated`);
     setEditFor(null);
   };
@@ -89,6 +91,7 @@ function CustomersPage() {
     setEditFor(c);
     setName(c.name);
     setPhone(c.phone ?? "");
+    setAddress(c.address ?? "");
     setLimit((c.creditLimit / 100).toFixed(2));
     setDueDays(String(c.dueDays));
   };
@@ -132,7 +135,7 @@ function CustomersPage() {
             Receivables come from unpaid order balances — payments reduce them without recording a second sale.
           </p>
         </div>
-        <Button size="sm" onClick={() => { setAddOpen(true); setName(""); setPhone(""); setLimit(""); setDueDays("14"); }}>
+        <Button size="sm" onClick={() => { setAddOpen(true); setName(""); setPhone(""); setAddress(""); setLimit(""); setDueDays("14"); }}>
           <UserPlus className="mr-1.5 size-3.5" /> Add customer
         </Button>
       </div>
@@ -206,6 +209,7 @@ function CustomersPage() {
           <div className="space-y-3">
             <div><Label className="text-xs">Name</Label><Input className="mt-1" value={name} onChange={(e) => setName(e.target.value)} /></div>
             <div><Label className="text-xs">Phone</Label><Input className="mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+            <div><Label className="text-xs">Address</Label><Input className="mt-1" value={address} onChange={(e) => setAddress(e.target.value)} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-xs">Credit limit (₱)</Label><Input inputMode="decimal" className="mt-1 text-right tabular-nums" value={limit} onChange={(e) => setLimit(e.target.value)} /></div>
               <div><Label className="text-xs">Terms (days)</Label><Input inputMode="numeric" className="mt-1" value={dueDays} onChange={(e) => setDueDays(e.target.value)} /></div>
@@ -227,6 +231,7 @@ function CustomersPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div><Label className="text-xs">Phone</Label><Input className="mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+            <div><Label className="text-xs">Address</Label><Input className="mt-1" value={address} onChange={(e) => setAddress(e.target.value)} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-xs">Credit limit (₱)</Label><Input inputMode="decimal" className="mt-1 text-right tabular-nums" value={limit} onChange={(e) => setLimit(e.target.value)} /></div>
               <div><Label className="text-xs">Terms (days)</Label><Input inputMode="numeric" className="mt-1" value={dueDays} onChange={(e) => setDueDays(e.target.value)} /></div>

@@ -38,7 +38,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FULFILLMENT_LABELS, calcOrder, calcProfit, fmtMargin, perCaseDiscountCents } from "@/lib/calc";
-import { fmtDate, fmtPeso } from "@/lib/money";
+import { fmtDate, fmtPeso, fmtTime } from "@/lib/money";
 import { printHtml } from "@/lib/print";
 import type { FulfillmentStatus } from "@/lib/types";
 import { METHOD_LABEL, useStore } from "@/store/useStore";
@@ -142,7 +142,7 @@ function OrderDetailPage() {
               <PaymentBadge order={order} />
             </div>
             <p className="text-xs text-muted-foreground">
-              {fmtDate(order.date)} · {order.customerName} · {order.source}
+              {fmtDate(order.date)}{fmtTime(order.createdAt) ? ` · ${fmtTime(order.createdAt)}` : ""} · {order.customerName}{order.customerAddress ? ` (${order.customerAddress})` : ""} · {order.source}
               {order.sourceDetail ? ` (${order.sourceDetail})` : ""}
               {order.staffName ? ` · Cashier: ${order.staffName}` : ""}
             </p>
