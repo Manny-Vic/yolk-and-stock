@@ -52,5 +52,23 @@ describe("customer name/address and receipt time", () => {
     expect(html).toContain("12 Rizal St &amp; Co");
     expect(html).toContain("Nena &lt;b&gt;X&lt;/b&gt;");
     expect(html).not.toContain("<b>X</b>");
+    expect(html).not.toContain("ORD-1");
+    expect(html).not.toContain("Source");
+    expect(html).not.toContain("walk-in");
+    expect(html).toContain("Nov 13, 2026");
+  });
+
+  it("leaves out the customer block for a plain walk-in with no address", () => {
+    const html = receiptHtml(
+      {
+        id: "ORD-2", createdAt: "2026-11-13T06:35:00.000Z", date: "2026-11-13", customerId: null,
+        customerName: "Walk-in Customer", source: "Walk-in", fulfillment: "pickup", deliveryFee: 0,
+        orderDiscount: 0, orderDiscountType: "fixed", lines: [], payments: [], status: "draft",
+        reservedCases: 0, stockDeducted: false,
+      },
+      useStore.getState().settings,
+    );
+    expect(html).not.toContain("Customer");
+    expect(html).not.toContain("Walk-in");
   });
 });

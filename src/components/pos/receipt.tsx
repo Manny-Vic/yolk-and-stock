@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { FULFILLMENT_LABELS, calcOrder, perCaseDiscountCents } from "@/lib/calc";
+import { calcOrder, perCaseDiscountCents } from "@/lib/calc";
 import { fmtDate, fmtPeso, fmtTime } from "@/lib/money";
 import { printHtml } from "@/lib/print";
 import type { Order, Settings } from "@/lib/types";
@@ -21,6 +21,7 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 export function receiptHtml(order: Order, settings: Settings): string {
   const t = calcOrder(order);
+  const hasName = !!order.customerName.trim() && order.customerName !== "Walk-in Customer";
   const lineRows = order.lines
     .map((l) => {
       const perCase = perCaseDiscountCents(l);
@@ -37,8 +38,8 @@ export function receiptHtml(order: Order, settings: Settings): string {
   return `
   <h1>${settings.storeName}</h1>
   <div class="muted">${settings.address} · ${settings.phone}</div>
-  <div class="section"><b>Order</b>${order.id} · ${fmtDate(order.date)}${fmtTime(order.createdAt) ? ` · ${fmtTime(order.createdAt)}` : ""} · ${FULFILLMENT_LABELS[order.status]}</div>
-  <div class="section"><b>Customer</b>${esc(order.customerName)}${order.customerId ? "" : " (walk-in)"}${order.customerAddress ? `<br><span class="muted">${esc(order.customerAddress)}</span>` : ""}<br><span class="muted">Source: ${order.source}${order.sourceDetail ? ` (${esc(order.sourceDetail)})` : ""}</span></div>
+  <div class="section"><b>Date</b>${fmtDate(order.date)}${fmtTime(order.createdAt) ? ` · ${fmtTime(order.createdAt)}` : ""}</div>
+  ${hasName || order.customerAddress ? `<div class="section"><b>Customer</b>${hasName ? esc(order.customerName) : ""}${order.customerAddress ? `${hasName ? "<br>" : ""}${esc(order.customerAddress)}` : ""}</div>` : ""}
   ${order.staffName ? `<div class="section"><b>Cashier</b>${order.staffName}</div>` : ""}
   <table><thead><tr><th>Product</th><th class="num">Amount</th></tr></thead><tbody>
     ${lineRows}
@@ -146,7 +147,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: { order: Order | nu
           </div>
 
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button variant="outline" size="sm" onClick={() => printHtml(`Receipt ${order.id}`, receiptHtml(order, settings), settings.receiptPaper ?? "standard")}>
+            <Button variant="outline" size="sm" onClick={() => printHtml("Receipt", receiptHtml(order, settings), settings.receiptPaper ?? "standard")}>
               <Printer className="mr-1.5 size-4" /> Print receipt
             </Button>
             <Button

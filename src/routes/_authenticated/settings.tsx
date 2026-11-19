@@ -94,6 +94,38 @@ function SettingsPage() {
       </section>
 
       <section className="rounded-xl border bg-card p-4 shadow-card">
+        <h2 className="text-sm font-bold">Receipt printer paper</h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Pick the width of your receipt roll so the text prints large. Measure the paper: about 5.8 cm wide is 58 mm, about 8 cm is 80 mm.
+        </p>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Receipt printer paper">
+          {([
+            ["58mm", "58 mm roll"],
+            ["80mm", "80 mm roll"],
+            ["standard", "Full page"],
+          ] as const).map(([value, label]) => {
+            const active = (settings.receiptPaper ?? "standard") === value;
+            return (
+              <Button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                variant={active ? "default" : "outline"}
+                className="h-11"
+                onClick={() => {
+                  updateSettings({ receiptPaper: value });
+                  toast.success(`Receipts will print for: ${label}`);
+                }}
+              >
+                {label}
+              </Button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="rounded-xl border bg-card p-4 shadow-card">
         <h2 className="mb-3 text-sm font-bold">POS behavior</h2>
         <div className="space-y-3">
           <ToggleRow
