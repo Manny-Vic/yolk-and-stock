@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { PaymentBadge, StatusBadge } from "@/components/shared/status-badge";
 import { receiptHtml } from "@/components/pos/receipt";
+import { ReceiptShareButtons } from "@/components/pos/receipt-share-buttons";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -152,6 +153,7 @@ function OrderDetailPage() {
           <Button variant="outline" size="sm" onClick={() => printHtml("Receipt", receiptHtml(order, settings), settings.receiptPaper ?? "standard")}>
             <Printer className="mr-1.5 size-3.5" /> Print
           </Button>
+          <ReceiptShareButtons order={order} settings={settings} />
           {t.balance > 0 && order.status !== "cancelled" ? (
             <Button size="sm" onClick={() => { setPayAmount((t.balance / 100).toFixed(2)); setPayOpen(true); }}>
               <Wallet className="mr-1.5 size-3.5" /> Record payment

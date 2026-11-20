@@ -1,5 +1,4 @@
-import { CheckCircle2, Printer, Send } from "lucide-react";
-import { toast } from "sonner";
+import { CheckCircle2, Printer } from "lucide-react";
 
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import { fmtDate, fmtPeso, fmtTime } from "@/lib/money";
 import { printHtml } from "@/lib/print";
 import type { Order, Settings } from "@/lib/types";
 import { METHOD_LABEL, useStore } from "@/store/useStore";
+import { ReceiptShareButtons } from "./receipt-share-buttons";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -26,21 +26,21 @@ export function receiptHtml(order: Order, settings: Settings): string {
     .map((l) => {
       const perCase = perCaseDiscountCents(l);
       const disc = l.discount > 0 ? (l.discountType === "percent" ? `−${l.discount}%` : `−${fmtPeso(l.discount)}`) : "—";
-      return `<tr><td>${l.productName}<br><span class="muted">${l.qty} × ${fmtPeso(l.unitPrice)} ${disc === "—" ? "" : `· ${disc}`}</span></td><td class="num">${fmtPeso(l.qty * (l.unitPrice - perCase))}</td></tr>`;
+      return `<tr><td>${esc(l.productName)}<br><span class="muted">${l.qty} × ${fmtPeso(l.unitPrice)} ${disc === "—" ? "" : `· ${disc}`}</span></td><td class="num">${fmtPeso(l.qty * (l.unitPrice - perCase))}</td></tr>`;
     })
     .join("");
   const payRows = order.payments
     .map(
       (p) =>
-        `<tr><td>${METHOD_LABEL[p.method]}${p.reference ? `<br><span class="muted">Ref ${p.reference}${p.verified ? " · verified" : " · unverified"}</span>` : ""}${p.dueDate ? `<br><span class="muted">Due ${fmtDate(p.dueDate)}</span>` : ""}</td><td class="num">${fmtPeso(p.amount)}</td></tr>`,
+        `<tr><td>${METHOD_LABEL[p.method]}${p.reference ? `<br><span class="muted">Ref ${esc(p.reference)}${p.verified ? " · verified" : " · unverified"}</span>` : ""}${p.dueDate ? `<br><span class="muted">Due ${fmtDate(p.dueDate)}</span>` : ""}</td><td class="num">${fmtPeso(p.amount)}</td></tr>`,
     )
     .join("");
   return `
-  <h1>${settings.storeName}</h1>
-  <div class="muted">${settings.address} · ${settings.phone}</div>
+  <h1>${esc(settings.storeName)}</h1>
+  <div class="muted">${esc(settings.address)} · ${esc(settings.phone)}</div>
   <div class="section"><b>Date</b>${fmtDate(order.date)}${fmtTime(order.createdAt) ? ` · ${fmtTime(order.createdAt)}` : ""}</div>
   ${hasName || order.customerAddress ? `<div class="section"><b>Customer</b>${hasName ? esc(order.customerName) : ""}${order.customerAddress ? `${hasName ? "<br>" : ""}${esc(order.customerAddress)}` : ""}</div>` : ""}
-  ${order.staffName ? `<div class="section"><b>Cashier</b>${order.staffName}</div>` : ""}
+  ${order.staffName ? `<div class="section"><b>Cashier</b>${esc(order.staffName)}</div>` : ""}
   <table><thead><tr><th>Product</th><th class="num">Amount</th></tr></thead><tbody>
     ${lineRows}
     ${order.orderDiscount > 0 ? `<tr><td>Order discount (${order.orderDiscountType === "percent" ? `${order.orderDiscount}%` : ""})</td><td class="num">−${fmtPeso(t.orderDiscount)}</td></tr>` : ""}
@@ -48,8 +48,8 @@ export function receiptHtml(order: Order, settings: Settings): string {
     <tr class="total"><td>Amount due</td><td class="num">${fmtPeso(t.total)}</td></tr>
   </tbody></table>
   ${payRows ? `<table><thead><tr><th>Payments</th><th class="num">Amount</th></tr></thead><tbody>${payRows}<tr class="total"><td>Balance</td><td class="num">${fmtPeso(t.balance)}</td></tr></tbody></table>` : ""}
-  ${order.notes ? `<div class="section"><b>Notes</b>${order.notes}</div>` : ""}
-  ${order.staffNotes ? `<div class="section"><b>Staff notes</b>${order.staffNotes}</div>` : ""}
+  ${order.notes ? `<div class="section"><b>Notes</b>${esc(order.notes)}</div>` : ""}
+  ${order.staffNotes ? `<div class="section"><b>Staff notes</b>${esc(order.staffNotes)}</div>` : ""}
   <div class="section muted" style="text-align:center">Thank you!</div>
   <div class="section muted">Fulfillment: ${order.fulfillment === "delivery" ? "Delivery" : "Store pickup"}${order.requestedDate ? ` · Requested ${fmtDate(order.requestedDate)}` : ""}</div>`;
 }
@@ -150,13 +150,7 @@ export function ReceiptDialog({ order, open, onOpenChange }: { order: Order | nu
             <Button variant="outline" size="sm" onClick={() => printHtml("Receipt", receiptHtml(order, settings), settings.receiptPaper ?? "standard")}>
               <Printer className="mr-1.5 size-4" /> Print receipt
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toast.success("Digital receipt sent", { description: `A copy of ${order.id} was sent to ${order.customerName}.` })}
-            >
-              <Send className="mr-1.5 size-4" /> Send digital receipt
-            </Button>
+            <ReceiptShareButtons order={order} settings={settings} />
             <Button size="sm" onClick={() => onOpenChange(false)}>Done</Button>
           </div>
         </div>
