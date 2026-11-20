@@ -1,13 +1,36 @@
 /** Open a small print window with the given receipt/statement HTML. */
 import type { ReceiptPaper } from "./types";
 
-const THERMAL = `@page { size: auto; margin: 0; } * { color: #000 !important; } body { font-family: Arial, Helvetica, sans-serif; font-weight: 600; } h1 { text-align: center; font-weight: 800; } .muted { text-align: center; display: block; } th { border-bottom: 1px solid #000; } td { border-bottom: 1px dashed #000; padding: 4px 0; } td .muted { text-align: left; display: inline; } .total td { font-weight: 900; border-bottom: none; } .section { margin-top: 10px; } .section b { margin-bottom: 1px; }`;
+/*
+ * Thermal rolls: solid black, bold text sized in vw (a share of the page width), so the
+ * receipt fills the roll even when the phone's print step lays it out on a bigger page
+ * (e.g. A4) and then shrinks the whole page down to the roll width.
+ * Sizes are designed in CSS px for the roll width (58 mm ≈ 219 px, 80 mm ≈ 302 px) and converted.
+ */
+function thermalCss(mm: 58 | 80): string {
+  const W = mm === 58 ? 219 : 302;
+  const v = (px: number) => `${((px / W) * 100).toFixed(2)}vw`;
+  const big = mm === 58 ? { h1: 18, small: 12, body: 15, label: 12, total: 18, pad: 9 } : { h1: 22, small: 14, body: 17, label: 13, total: 21, pad: 14 };
+  return `@page { margin: 0; }
+  tr, .section { break-inside: avoid; }
+  * { color: #000 !important; }
+  html, body { width: auto; max-width: none; }
+  body { margin: 0; padding: ${v(6)} ${v(big.pad)}; font-family: Arial, Helvetica, sans-serif; font-weight: 600; }
+  h1 { text-align: center; font-weight: 800; font-size: ${v(big.h1)}; }
+  .muted { text-align: center; display: block; font-size: ${v(big.small)}; }
+  table { margin-top: ${v(10)}; }
+  th { border-bottom: ${v(1.2)} solid #000; font-size: ${v(big.label)}; padding-bottom: ${v(3)}; }
+  td { border-bottom: ${v(1.2)} dashed #000; padding: ${v(4)} 0; font-size: ${v(big.body)}; }
+  td .muted { text-align: left; display: inline; font-size: ${v(big.small)}; }
+  .total td { font-weight: 900; border-bottom: none; font-size: ${v(big.total)}; padding-top: ${v(6)}; }
+  .section { margin-top: ${v(10)}; font-size: ${v(big.body)}; }
+  .section b { margin-bottom: ${v(1)}; font-size: ${v(big.label)}; }`;
+}
 
 const PAPER_CSS: Record<ReceiptPaper, string> = {
   standard: "",
-  // Thermal rolls: big, solid black text (grey prints faint on thermal paper).
-  "80mm": `${THERMAL} body { width: 80mm; padding: 3mm 4mm; } h1 { font-size: 22px; } .muted { font-size: 14px; } td, .section { font-size: 17px; } th, .section b { font-size: 13px; } .total td { font-size: 21px; }`,
-  "58mm": `${THERMAL} body { width: 58mm; padding: 2mm 2.5mm; } h1 { font-size: 18px; } .muted { font-size: 12px; } td, .section { font-size: 15px; } th, .section b { font-size: 12px; } .total td { font-size: 18px; }`,
+  "80mm": thermalCss(80),
+  "58mm": thermalCss(58),
 };
 
 /** Full HTML document used for printing (exported for tests and previews). */
