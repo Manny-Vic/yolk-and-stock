@@ -37,6 +37,7 @@ export const BASE_CSS = `  * { box-sizing: border-box; }
   .num { text-align: right; font-variant-numeric: tabular-nums; }
   .total td { font-weight: 800; font-size: 14px; border-bottom: none; padding-top: 8px; }
   .section { margin-top: 14px; font-size: 12px; }
+  .fulfil { text-align: center; font-weight: 800; border: 2px solid #000; padding: 4px 0; letter-spacing: .05em; }
   .section b { display: block; font-size: 10px; text-transform: uppercase; color: #6b7f75; margin-bottom: 3px; }`;
 
 const PAPER_CSS: Record<ReceiptPaper, string> = {

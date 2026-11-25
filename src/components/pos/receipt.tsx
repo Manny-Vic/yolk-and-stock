@@ -38,6 +38,7 @@ export function receiptHtml(order: Order, settings: Settings): string {
   return `
   <h1>${esc(settings.storeName)}</h1>
   <div class="muted">${esc(settings.address)} · ${esc(settings.phone)}</div>
+  <div class="section fulfil">${order.fulfillment === "delivery" ? "DELIVERY" : "STORE PICKUP"}${order.requestedDate ? `<br><span style="font-size:.8em">Requested ${fmtDate(order.requestedDate)}</span>` : ""}</div>
   <div class="section"><b>Date</b>${fmtDate(order.date)}${fmtTime(order.createdAt) ? ` · ${fmtTime(order.createdAt)}` : ""}</div>
   ${hasName || order.customerAddress ? `<div class="section"><b>Customer</b>${hasName ? esc(order.customerName) : ""}${order.customerAddress ? `${hasName ? "<br>" : ""}${esc(order.customerAddress)}` : ""}</div>` : ""}
   ${order.staffName ? `<div class="section"><b>Cashier</b>${esc(order.staffName)}</div>` : ""}
@@ -50,8 +51,7 @@ export function receiptHtml(order: Order, settings: Settings): string {
   ${payRows ? `<table><thead><tr><th>Payments</th><th class="num">Amount</th></tr></thead><tbody>${payRows}<tr class="total"><td>Balance</td><td class="num">${fmtPeso(t.balance)}</td></tr></tbody></table>` : ""}
   ${order.notes ? `<div class="section"><b>Notes</b>${esc(order.notes)}</div>` : ""}
   ${order.staffNotes ? `<div class="section"><b>Staff notes</b>${esc(order.staffNotes)}</div>` : ""}
-  <div class="section muted" style="text-align:center">Thank you!</div>
-  <div class="section muted">Fulfillment: ${order.fulfillment === "delivery" ? "Delivery" : "Store pickup"}${order.requestedDate ? ` · Requested ${fmtDate(order.requestedDate)}` : ""}</div>`;
+  <div class="section muted" style="text-align:center">Thank you!</div>`;
 }
 
 export function ReceiptDialog({ order, open, onOpenChange }: { order: Order | null; open: boolean; onOpenChange: (v: boolean) => void }) {
