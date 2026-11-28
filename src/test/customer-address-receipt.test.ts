@@ -19,11 +19,13 @@ describe("customer name/address and receipt time", () => {
   it("starts each cart with no address and resets after clearing", () => {
     const s = useStore.getState();
     expect(s.cart.customerAddress).toBe("");
+    expect(s.cart.fulfillment).toBe("delivery");
     s.updateCart({ customerName: "Aling Nena", customerAddress: "12 Rizal St, Cebu" });
     expect(useStore.getState().cart.customerAddress).toBe("12 Rizal St, Cebu");
     useStore.getState().clearCart();
     expect(useStore.getState().cart.customerAddress).toBe("");
     expect(useStore.getState().cart.customerName).toBe("Walk-in Customer");
+    expect(useStore.getState().cart.fulfillment).toBe("delivery");
   });
 
   it("prints name, address and time on the receipt, and escapes HTML", () => {

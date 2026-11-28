@@ -85,7 +85,7 @@ export const emptyCart = (): Cart => ({
   sourceDetail: "",
   notes: "",
   staffNotes: "",
-  fulfillment: "pickup",
+  fulfillment: "delivery",
   requestedDate: "",
   deliveryFee: 0,
   orderDiscount: 0,
